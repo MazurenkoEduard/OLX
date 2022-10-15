@@ -53,8 +53,6 @@ def relogin(window, session):
                     return True
             else:
                 return False
-                # session.save_cookies(window.cookies_location)
-                # return True
         else:
             return False
     except Exception as e:

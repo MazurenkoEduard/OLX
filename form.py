@@ -161,13 +161,12 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 mess = section + '\n' + error
                 with open('data/screenshot.png', 'rb') as file:
                     img = file.read()
-                #bot.send_message(self.ProgID, mess)
                 bot.send_photo(self.ProgID, img, caption=mess)
             else:
                 mess = error
                 bot.send_message(self.UserID, mess)
         except Exception:
-            pass
+            bot.send_message(self.ProgID, 'Report function error')
 
     def audio(self, path):
         try:
@@ -247,12 +246,12 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
 
 
 def config_create():
-    if os.path.exists('data') == False:
+    if not os.path.exists('data'):
         os.mkdir('data')
-    if os.path.exists('data\\driver') == False:
+    if not os.path.exists('data\\driver'):
         os.mkdir('data\\driver')
-    if os.path.exists('data\\sounds') == False:
+    if not os.path.exists('data\\sounds'):
         os.mkdir('data\\sounds')
-    if os.path.exists('data\\cookies.txt') == False:
+    if not os.path.exists('data\\cookies.txt'):
         file = open('data\\cookies.txt', 'w')
         file.close()

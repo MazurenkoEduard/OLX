@@ -35,12 +35,13 @@ class Browser:
         url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_' + version
         re = requests.get(url)
         driver_version = re.text            
-        driver = requests.get("http://chromedriver.storage.googleapis.com/" + driver_version + "/chromedriver_win32.zip")
+        driver = requests.get(
+            "http://chromedriver.storage.googleapis.com/" + driver_version + "/chromedriver_win32.zip")
         with open(self.dir_path + 'chromedriver.zip', 'wb') as file:
             file.write(driver.content)
-        zip = zipfile.ZipFile(self.dir_path + 'chromedriver.zip')            
-        zip.extractall(self.dir_path) 
-        zip.close()
+        zip_file = zipfile.ZipFile(self.dir_path + 'chromedriver.zip')
+        zip_file.extractall(self.dir_path)
+        zip_file.close()
         os.remove(self.dir_path + 'chromedriver.zip')
 
     def _load_browser(self, headless):

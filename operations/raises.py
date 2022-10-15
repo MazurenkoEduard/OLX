@@ -60,7 +60,6 @@ def raises(self):
                 if session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10):
                     time.sleep(1)
                     session.browser.find_element_by_xpath('//button[@data-cy="ads-reposting-dismiss"]').click()
-            #Открытие окна поднятий
             if session.wait('//div[@data-testid="flyout-toggle"]/button', timer=10):
                 elem = session.browser.find_element_by_xpath('//div[@data-testid="flyout-toggle"]/button')
                 elem.click()

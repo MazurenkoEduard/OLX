@@ -168,14 +168,14 @@ def pay(window, session, data):
                     return 'Relogin Error'
             else:
                 return 'Error'
-        PayElems1 = session.browser.find_elements_by_xpath('//div[@class="css-k1bey5"]/div')
+        pay_elems1 = session.browser.find_elements_by_xpath('//div[@class="css-k1bey5"]/div')
         if data[1]:
             if data[1].find('Легкий старт') != -1:
-                class_name = PayElems1[0]
+                class_name = pay_elems1[0]
             elif data[1].find('Быстрая продажа') != -1:
-                class_name = PayElems1[1]
+                class_name = pay_elems1[1]
             elif data[1].find('Турбо продажа') != -1:
-                class_name = PayElems1[2]
+                class_name = pay_elems1[2]
 
             if class_name.get_attribute('disabled'):
                 if data[3] < 5:
@@ -186,22 +186,20 @@ def pay(window, session, data):
             elif class_name.get_attribute('class').find("css-fujbfz") == -1:
                 class_name.click()
         else:
-            class_name = PayElems1[1]
+            class_name = pay_elems1[1]
             if class_name.get_attribute('class').find("css-1fgr50i") != -1:
                 class_name.click()
         if data[2]:
-            PayElems2 = session.browser.find_elements_by_xpath('//div[@data-cy="vas-item"]')
+            pay_elems2 = session.browser.find_elements_by_xpath('//div[@data-cy="vas-item"]')
             if data[2].find('7 поднятий в верх списка') != -1:
-                PayElems2[0].click()
+                pay_elems2[0].click()
             if data[2].find('VIP-объявление на 7 дней') != -1:
-                PayElems2[1].click()
+                pay_elems2[1].click()
             if data[2].find('Топ-объявление на 7 дней') != -1:
-                PayElems2[2].click()
+                pay_elems2[2].click()
                 session.browser.find_element_by_xpath('//div[@data-testid="dropdown-head"]').click()
-                # time.sleep(1)
-                # session.browser.find_elements_by_xpath('//li[@data-testid="dropdown-item"]')[0].click()
             elif data[2].find('Топ-объявление на 30 дней') != -1:
-                PayElems2[2].click()
+                pay_elems2[2].click()
                 session.browser.find_element_by_xpath('//div[@data-testid="dropdown-head"]').click()
                 time.sleep(1)
                 session.browser.find_elements_by_xpath('//li[@data-testid="dropdown-item"]')[1].click()
@@ -225,7 +223,7 @@ def pay(window, session, data):
         except Exception as e:
             return str(e)
 
-        session.browser.find_element_by_xpath('//button[@data-cy="purchase-pay-button"]').click()  # ОПЛАТА!!!
+        session.browser.find_element_by_xpath('//button[@data-cy="purchase-pay-button"]').click()
         if not session.wait('//div[@data-cy="purchase-confirmation-page[success]"]', timer=10):
             return 5
         return active
