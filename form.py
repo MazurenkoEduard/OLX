@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 CURRENT_VERSION = ['0', '8', '3']
 
-TOKEN = '1627942449:AAGKtgQSz4lznPbPiS9VFmm3-zR6KUr_rNY'
+TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
 
@@ -104,7 +104,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.login_input.textChanged.connect(self.login_change)
         self.password_input.textChanged.connect(self.pass_change)
         # Telegram ID
-        self.ProgID = 478373716
+        self.CreatorID = os.getenv("CREATOR_ID")
         self.UserID = ''
         # Version
         self.version.setText('.'.join(CURRENT_VERSION))
@@ -161,12 +161,12 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 mess = section + '\n' + error
                 with open('data/screenshot.png', 'rb') as file:
                     img = file.read()
-                bot.send_photo(self.ProgID, img, caption=mess)
+                bot.send_photo(self.CreatorID, img, caption=mess)
             else:
                 mess = error
                 bot.send_message(self.UserID, mess)
         except Exception:
-            bot.send_message(self.ProgID, 'Report function error')
+            bot.send_message(self.CreatorID, 'Report function error')
 
     def audio(self, path):
         try:
