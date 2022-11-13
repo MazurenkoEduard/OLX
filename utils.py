@@ -3,24 +3,26 @@
 import pandas as pd
 from selenium.webdriver.common.action_chains import ActionChains
 from browser import Browser, BrowserException
+from selenium.webdriver.common.by import By
 
 
 def login(self):
+    session = Browser(dir_path=self.window.driver_path)
     try:
-        session = Browser(dir_path=self.window.driver_path)
         session.driver(headless=False)
-        session.browser.get("https://www.olx.ua/account/?ref%5B0%5D%5Baction%5D=myaccount&ref%5B0%5D%5Bmethod%5D=index#login")
-        session.browser.maximize_window()
+        session.browser.get(
+            "https://www.olx.ua/account/?ref%5B0%5D%5Baction%5D=myaccount&ref%5B0%5D%5Bmethod%5D=index#login")
         if self.window.login_text and self.window.pass_text:
-            session.wait('//section[@class="login-page has-animation"]')
-            elem = session.browser.find_element_by_xpath('//section[@class="login-page has-animation"]')
-            email = elem.find_element_by_xpath('//input[@id="userEmail"]')
-            email.send_keys(self.window.login_text);
-            password = elem.find_element_by_xpath('//input[@id="userPass"]')
-            password.send_keys(self.window.pass_text)
-            button = elem.find_element_by_xpath('//button[@id="se_userLogin"]')
-            ActionChains(session.browser).click(button).perform()
-        if session.wait(path='//div[@data-testid="qa-user-dropdown"]', path2='//div[@class="userbox-dd__user-name"]', timer=0):
+            elem = session.wait('//section[@class="login-page has-animation"]')
+            if elem:
+                email = elem.find_element(By.XPATH, '//input[@id="userEmail"]')
+                email.send_keys(self.window.login_text)
+                password = elem.find_element(By.XPATH, '//input[@id="userPass"]')
+                password.send_keys(self.window.pass_text)
+                button = elem.find_element(By.XPATH, '//button[@id="se_userLogin"]')
+                ActionChains(session.browser).click(button).perform()
+        if session.wait(path='//div[@data-testid="qa-user-dropdown"]',
+                        path2='//div[@class="userbox-dd__user-name"]', timer=0):
             cookies = session.browser.get_cookies()
             session.exit()
             session.save_cookies(self.window.cookies_location, cookies)
@@ -39,14 +41,15 @@ def login(self):
 def relogin(window, session):
     try:
         if window.login_text and window.pass_text:
-            session.browser.get("https://www.olx.ua/account/?ref%5B0%5D%5Baction%5D=myaccount&ref%5B0%5D%5Bmethod%5D=index#login")
-            if session.wait('//section[@class="login-page has-animation"]'):
-                elem = session.browser.find_element_by_xpath('//section[@class="login-page has-animation"]')
-                email = elem.find_element_by_xpath('//input[@id="userEmail"]')
-                email.send_keys(window.login_text);
-                password = elem.find_element_by_xpath('//input[@id="userPass"]')
+            session.browser.get(
+                "https://www.olx.ua/account/?ref%5B0%5D%5Baction%5D=myaccount&ref%5B0%5D%5Bmethod%5D=index#login")
+            elem = session.wait('//section[@class="login-page has-animation"]')
+            if elem:
+                email = elem.find_element(By.XPATH, '//input[@id="userEmail"]')
+                email.send_keys(window.login_text)
+                password = elem.find_element(By.XPATH, '//input[@id="userPass"]')
                 password.send_keys(window.pass_text)
-                button = elem.find_element_by_xpath('//button[@id="se_userLogin"]')
+                button = elem.find_element(By.XPATH, '//button[@id="se_userLogin"]')
                 ActionChains(session.browser).click(button).perform()
                 if session.wait(path='//div[@data-testid="qa-user-dropdown"]',
                                 path2='//div[@class="userbox-dd__user-name"]'):
@@ -70,9 +73,10 @@ def preload(self, output, session, headless=True):
             session.exit()
             self.output_signal.emit('Перезайдите в аккаунт', output)
             return False
-        if session.wait('//div[@id="cookiesBar"]/button', timer=1):
+        cookies_bar = session.wait('//div[@id="cookiesBar"]/button', timer=1)
+        if cookies_bar:
             try:
-                session.browser.find_element_by_xpath('//div[@id="cookiesBar"]/button').click()
+                cookies_bar.click()
             except Exception:
                 pass
         return True

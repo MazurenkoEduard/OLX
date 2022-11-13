@@ -9,7 +9,9 @@ import subprocess
 from selenium import webdriver as web
 from seleniumwire import webdriver as wire_web
 from selenium.webdriver.common.by import By
-
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 try:
     from subprocess import DEVNULL
 except ImportError:
@@ -20,16 +22,15 @@ class BrowserException(Exception):
     pass
 
 
-sessions = []
-
-
 class Browser:
+    sessions = []
+
     def __init__(self, dir_path='', proxy=None):
         self.dir_path = dir_path
         self.browser = None
         self._browser_wait = False
         self.proxy = proxy
-        sessions.append(self)
+        self.__class__.sessions.append(self)
 
     def _load_driver(self, version):
         url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_' + version
@@ -59,10 +60,12 @@ class Browser:
                     'no_proxy': 'localhost,127.0.0.1'
                     }
                 }
-            self.browser = wire_web.Chrome(executable_path=self.dir_path + 'chromedriver', seleniumwire_options=wire_options, options=chrome_options)
+            self.browser = wire_web.Chrome(executable_path=self.dir_path + 'chromedriver',
+                                           seleniumwire_options=wire_options, options=chrome_options)
         else:
             self.browser = web.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)
-        self.browser.set_window_size(1920, 1080)
+        # self.browser.maximize_window()
+        # self.browser.set_window_size(1920, 1080)
 
     def driver(self, headless=True):
         try:
@@ -71,8 +74,10 @@ class Browser:
         except Exception:
             try:
                 sys_drive = os.getenv("SystemDrive")
-                filepath = [r'wmic datafile where name="' + str(sys_drive) + r'\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe" get Version /value',
-                            r'wmic datafile where name="' + str(sys_drive) + r'\\Program Files\\Google\\Chrome\\Application\\chrome.exe" get Version /value']
+                filepath = [r'wmic datafile where name="' + str(sys_drive) +
+                            r'\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe" get Version /value',
+                            r'wmic datafile where name="' + str(sys_drive) +
+                            r'\\Program Files\\Google\\Chrome\\Application\\chrome.exe" get Version /value']
                 for path in filepath:
                     output = subprocess.check_output(path, shell=True, errors=None, stdin=DEVNULL, stderr=DEVNULL)
                     version = output.decode('utf-8').strip().replace('Version=', '')
@@ -100,45 +105,34 @@ class Browser:
                 self.browser.add_cookie(cookie)
 
     def save_cookies(self, cookies_location, cookies=None):
-        with open(cookies_location, 'wb') as filehandler:
+        with open(cookies_location, 'wb') as file:
             if cookies:
-                pickle.dump(cookies, filehandler)
+                pickle.dump(cookies, file)
             else:
-                pickle.dump(self.browser.get_cookies(), filehandler)
+                pickle.dump(self.browser.get_cookies(), file)
 
-    def wait(self, path, path2='', timer=20, mode=By.XPATH):
-        t = 0
-        while True:
-            try:        
-                if t >= timer and timer != 0:
-                    return False  
-                try:
-                    self.browser.find_element(mode, path)
-                except:
-                    self.browser.find_element(mode, path2)
-                return True
-            except Exception as e:
-                if 'chrome not reachable' in str(e):
-                    return False
-                t += 1
-                time.sleep(0.5)
+    def wait(self, path, path2=None, timer=20, method=By.XPATH):
+        try:
+            if timer == 0:
+                timer = 300
+            if not path2:
+                element = WebDriverWait(self.browser, timer).until(EC.presence_of_element_located((method, path)))
+            else:
+                element = WebDriverWait(self.browser, timer).until(EC.any_of(
+                    EC.presence_of_element_located((method, path)), EC.presence_of_element_located((method, path2))))
+            return element
+        except TimeoutException:
+            return None
 
     def exit(self):
         if self.browser:
             while self._browser_wait:
                 time.sleep(1)
-            try:
-                self.browser.close()
-            except Exception:
-                pass
-            try:
-                self.browser.quit()
-            except Exception:
-                pass
+            self.browser.quit()
             self.browser = None
-        sessions.remove(self)
+        self.__class__.sessions.remove(self)
 
-
-def clear():
-    while sessions:
-        sessions[0].exit()
+    @classmethod
+    def clear(cls):
+        while cls.sessions:
+            cls.sessions[0].exit()

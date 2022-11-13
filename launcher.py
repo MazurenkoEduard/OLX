@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import browser
+from browser import Browser
 from PyQt5 import QtWidgets
 from form import config_create, Window
 
@@ -12,7 +12,7 @@ def main():
     window = Window()
     window.show()
     code = app.exec_()
-    browser.clear()
+    Browser.clear()
     sys.exit(code)
 
 

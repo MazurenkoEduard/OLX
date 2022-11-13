@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from browser import Browser
 from utils import preload, write_excel
+from selenium.webdriver.common.by import By
 
 
 def stat_excel(path, sheetname, id):
@@ -48,16 +49,21 @@ def stats(self):
                 session.browser.get(f"https://www.olx.ua/myaccount/pro/?query={ids[i]}")
                 if i == 0:
                     time.sleep(3)
-                    if session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10):
-                        session.browser.find_element_by_xpath('//button[@data-cy="welcome-modal-accept"]').click()
-                    if session.wait('//button[@aria-label="Close"]', timer=10):
+                    accept_button = session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10)
+                    if accept_button:
                         time.sleep(1)
-                        session.browser.find_element_by_xpath('//button[@aria-label="Close"]').click()
-                    if session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10):
+                        accept_button.click()
+                    close_button = session.wait('//button[@aria-label="Close"]', timer=10)
+                    if close_button:
                         time.sleep(1)
-                        session.browser.find_element_by_xpath('//button[@data-cy="ads-reposting-dismiss"]').click()
-                if session.wait('//div[@data-cy="inventory-stats"]/button', timer=10):
-                    session.browser.find_element_by_xpath('//div[@data-cy="inventory-stats"]/button').click()
+                        close_button.click()
+                    dismiss_button = session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10)
+                    if dismiss_button:
+                        time.sleep(1)
+                        dismiss_button.click()
+                inventory_button = session.wait('//div[@data-cy="inventory-stats"]/button', timer=10)
+                if inventory_button:
+                    inventory_button.click()
                 else:
                     for k in list(data.keys())[1:]:
                         data[k].append('')
@@ -73,8 +79,7 @@ def stats(self):
                 self.output_signal.emit(ids[i] + ' - Объявление не найдено', self.window.output_2)
                 long += 1
                 continue
-            session.wait('//div[@data-cy="offer-stats-graph"]/div[2]')
-            elem = session.browser.find_element_by_xpath('//div[@data-cy="offer-stats-graph"]/div[2]')
+            elem = session.wait('//div[@data-cy="offer-stats-graph"]/div[2]')
             svg = elem.find_element_by_tag_name('svg').get_attribute('innerHTML')
             soup = BeautifulSoup(svg, 'html.parser')
             gs = soup.find_all('g')
@@ -92,7 +97,7 @@ def stats(self):
                 date = (datetime.strptime(date, "%d.%m") - timedelta(days=1)).strftime("%d.%m")
             nums = dict(list(numbers.items()))
             for n in nums.keys():
-                if not n in data.keys():
+                if n not in data.keys():
                     data[n] = ['' for l in range(long)]
                 data[n].append(nums[n])
             self.bar_signal.emit((i + 1) / len(ids) * self.window.stat_bar.maximum(), self.window.stat_bar)

@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 CURRENT_VERSION = ['0', '8', '3']
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "1627942449:AAGKtgQSz4lznPbPiS9VFmm3-zR6KUr_rNY"
 bot = telebot.TeleBot(TOKEN)
 
 
@@ -104,20 +104,22 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.login_input.textChanged.connect(self.login_change)
         self.password_input.textChanged.connect(self.pass_change)
         # Telegram ID
-        self.CreatorID = os.getenv("CREATOR_ID")
-        self.UserID = ''
+        self.CreatorID = '478373716'
+        self.UserID = None
         # Version
         self.version.setText('.'.join(CURRENT_VERSION))
 
         self.load_settings()
 
-    def bar_signal_accept(self, value, bar):
+    @staticmethod
+    def bar_signal_accept(value, bar):
         if value >= 100:
             bar.setValue(100)
         else:
             bar.setValue(value)
 
-    def output_signal_accept(self, text, output):
+    @staticmethod
+    def output_signal_accept(text, output):
         output.append(text)
 
     def browse_folder(self, input):
@@ -152,28 +154,29 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def pass_change(self):
         self.pass_text = self.password_input.text()
 
-    def version(self, vers):
-        return int(vers[0]) * 100 + int(vers[1]) * 10 + int(vers[2])
-
-    def report(self, error, section=None):
+    def report(self, error, section=None, image=None):
         try:
             if section:
                 mess = section + '\n' + error
-                with open('data/screenshot.png', 'rb') as file:
-                    img = file.read()
-                bot.send_photo(self.CreatorID, img, caption=mess)
-            else:
+                if image:
+                    with open(f'data/{image}', 'rb') as file:
+                        img = file.read()
+                    bot.send_photo(self.CreatorID, img, caption=mess)
+                else:
+                    bot.send_message(self.CreatorID, text=mess)
+            elif self.UserID:
                 mess = error
                 bot.send_message(self.UserID, mess)
-        except Exception:
-            bot.send_message(self.CreatorID, 'Report function error')
+        except Exception as e:
+            mess = 'Report function error' + '\n' + str(e)
+            bot.send_message(self.CreatorID, mess)
 
     def audio(self, path):
         try:
             if self.sound_button.isChecked():
                 sounds = os.listdir('data\\sounds')
                 for s in sounds:
-                    if s.find('error') != -1:
+                    if s.find(path) != -1:
                         playsound('data\\sounds\\' + s, False)
                         break
         except Exception as e:
@@ -213,26 +216,25 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def load_settings(self):
         try:
             settings = QSettings('data\\input_data.ini', QSettings.IniFormat)
-            self.sheet_input_1.setText(settings.value('sheet1'))
-            self.sheet_input_2.setText(settings.value('sheet2'))
-            self.sheet_input_3.setText(settings.value('sheet3'))
-            self.sheet_input_4.setText(settings.value('sheet4'))
-            self.id_input_1.setText(settings.value('id1'))
-            self.id_input_2.setText(settings.value('id2'))
-            self.id_input_3.setText(settings.value('id3'))
-            self.id_input_4.setText(settings.value('id4'))
+            self.sheet_input_1.setText(settings.value('sheet1') if settings.value('sheet1') else "Лист1")
+            self.sheet_input_2.setText(settings.value('sheet2') if settings.value('sheet2') else "Лист1")
+            self.sheet_input_3.setText(settings.value('sheet3') if settings.value('sheet3') else "Лист1")
+            self.sheet_input_4.setText(settings.value('sheet4') if settings.value('sheet4') else "Лист1")
+            self.id_input_1.setText(settings.value('id1') if settings.value('id1') else "Id")
+            self.id_input_2.setText(settings.value('id2') if settings.value('id2') else "Id")
+            self.id_input_3.setText(settings.value('id3') if settings.value('id3') else "Id")
+            self.id_input_4.setText(settings.value('id4') if settings.value('id4') else "Id")
             self.path_input_1.setText(settings.value('path1'))
             self.path_input_2.setText(settings.value('path2'))
             self.path_input_3.setText(settings.value('path3'))
             self.path_input_4.setText(settings.value('path4'))
-            self.date_input_1.setText(settings.value('date1'))
-            self.date_input_4.setText(settings.value('date4'))
-            self.time_input_1.setText(settings.value('time1'))
-            self.time_input_4.setText(settings.value('time4'))
-            self.tariff_input_1.setText(settings.value('tariff1'))
-            self.addit_input_1.setText(settings.value('addit1'))
+            self.date_input_1.setText(settings.value('date1') if settings.value('date1') else "Date")
+            self.date_input_4.setText(settings.value('date4') if settings.value('date4') else "Date")
+            self.time_input_1.setText(settings.value('time1') if settings.value('time1') else "Time")
+            self.time_input_4.setText(settings.value('time4') if settings.value('time4') else "Time")
+            self.tariff_input_1.setText(settings.value('tariff1') if settings.value('tariff1') else "Tariff1")
+            self.addit_input_1.setText(settings.value('addit1') if settings.value('addit1') else "Tariff2")
             self.user_id_input.setText(settings.value('user_id'))
-            self.UserID = self.user_id_input.text()
             self.login_input.setText(settings.value('login'))
             self.login_text = self.login_input.text()
             self.password_input.setText(settings.value('password'))

@@ -4,6 +4,7 @@ import time
 import pandas as pd
 from browser import Browser
 from utils import preload, write_excel
+from selenium.webdriver.common.by import By
 
 
 def raise_excel(path, sheetname, id):
@@ -52,17 +53,21 @@ def raises(self):
             session.browser.get("https://www.olx.ua/myaccount/pro/?query=" + ids[i])
             if i == 0:
                 time.sleep(3)
-                if session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10):
-                    session.browser.find_element_by_xpath('//button[@data-cy="welcome-modal-accept"]').click()
-                if session.wait('//button[@aria-label="Close"]', timer=10):
+                accept_button = session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10)
+                if accept_button:
                     time.sleep(1)
-                    session.browser.find_element_by_xpath('//button[@aria-label="Close"]').click()
-                if session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10):
+                    accept_button.click()
+                close_button = session.wait('//button[@aria-label="Close"]', timer=10)
+                if close_button:
                     time.sleep(1)
-                    session.browser.find_element_by_xpath('//button[@data-cy="ads-reposting-dismiss"]').click()
-            if session.wait('//div[@data-testid="flyout-toggle"]/button', timer=10):
-                elem = session.browser.find_element_by_xpath('//div[@data-testid="flyout-toggle"]/button')
-                elem.click()
+                    close_button.click()
+                dismiss_button = session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10)
+                if dismiss_button:
+                    time.sleep(1)
+                    dismiss_button.click()
+            toggle_button = session.wait('//div[@data-testid="flyout-toggle"]/button', timer=10)
+            if toggle_button:
+                toggle_button.click()
             else:
                 tariff.append('')
                 date.append('')
@@ -73,14 +78,15 @@ def raises(self):
                 self.bar_signal.emit((i + 1) / len(ids) * self.window.up_bar.maximum(), self.window.up_bar)
                 self.output_signal.emit(ids[i] + ' - Объявление не рекламируется', self.window.output_3)
                 continue
-            #Получение данных
             if session.wait('//div[@data-testid="flyout-content"]'):
-                divs = len(session.browser.find_elements_by_xpath('//div[@data-testid="flyout-content"]/div/div'))
+                divs = len(session.browser.find_elements(By.XPATH, '//div[@data-testid="flyout-content"]/div/div'))
                 if divs > 1:
                     try:
                         index = 3
-                        tariff_text = session.browser.find_element_by_xpath('//div[@data-testid="flyout-content"]/div/div[1]/p[1]').text
-                        tariff_time = session.browser.find_element_by_xpath('//div[@data-testid="flyout-content"]/div/div[1]/p[2]').text.split(': ')[1].split(', ')
+                        tariff_text = session.browser.find_element(
+                            By.XPATH, '//div[@data-testid="flyout-content"]/div/div[1]/p[1]').text
+                        tariff_time = session.browser.find_element(
+                            By.XPATH, '//div[@data-testid="flyout-content"]/div/div[1]/p[2]').text.split(': ')[1].split(', ')
                         tariff.append(tariff_text)
                         date.append(tariff_time[0])
                         timer.append(tariff_time[1])
@@ -99,8 +105,10 @@ def raises(self):
                     timer.append('')
                 if index == 0:
                     self.output_signal.emit(ids[i] + ' - Ошибка', self.window.output_3)
-                elif session.browser.find_element_by_xpath(f'//div[@data-testid="flyout-content"]/div/div[{index}]/p').text == 'Поднятие вверх списка':
-                    table = session.browser.find_elements_by_xpath(f'//div[@data-testid="flyout-content"]/div/div[{index}]/div/p')
+                elif session.browser.find_element(
+                        By.XPATH, f'//div[@data-testid="flyout-content"]/div/div[{index}]/p').text == 'Поднятие вверх списка':
+                    table = session.browser.find_elements(
+                        By.XPATH, f'//div[@data-testid="flyout-content"]/div/div[{index}]/div/p')
                     dateX = []
                     timeX = []
                     for t in table:

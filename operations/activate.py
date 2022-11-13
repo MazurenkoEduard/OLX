@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from browser import Browser
 from utils import preload, relogin
+from selenium.webdriver.common.by import By
 
 
 def activate_excel(self, path, sheetname, id, date, timer):
@@ -131,21 +132,30 @@ def activate(window, session, data):
     try:
         link = 'https://www.olx.ua/d/myaccount/finished?query=' + data[0]
         session.browser.get(link)
-        if session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10):
+        accept_button = session.wait('//button[@data-cy="welcome-modal-accept"]', timer=10)
+        if accept_button:
             time.sleep(1)
-            session.browser.find_element_by_xpath('//button[@data-cy="welcome-modal-accept"]').click()
-        if session.wait('//button[@aria-label="Close"]', timer=10):
+            accept_button.click()
+        close_button = session.wait('//button[@aria-label="Close"]', timer=10)
+        if close_button:
             time.sleep(1)
-            session.browser.find_element_by_xpath('//button[@aria-label="Close"]').click()
-        if session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10):
+            close_button.click()
+        dismiss_button = session.wait('//button[@data-cy="ads-reposting-dismiss"]', timer=10)
+        if dismiss_button:
             time.sleep(1)
-            session.browser.find_element_by_xpath('//button[@data-cy="ads-reposting-dismiss"]').click()
-        if not session.wait('//button[@aria-label="Активировать"]'):
+            dismiss_button.click()
+        activate_button = session.wait('//button[@aria-label="Активировать"]')
+        if activate_button:
+            activate_button.click()
+            time.sleep(5)
+            return 1
+        else:
             if not session.wait('//div[@class="userbox-dd__user-name"]'):
                 if relogin(window, session):
                     session.browser.get(link)
-                    if session.wait('//button[@aria-label="Активировать"]'):
-                        session.browser.find_element_by_xpath('//button[@aria-label="Активировать"]').click()
+                    activate_button = session.wait('//button[@aria-label="Активировать"]')
+                    if activate_button:
+                        activate_button.click()
                         time.sleep(5)
                         return 1
                 else:
@@ -155,9 +165,5 @@ def activate(window, session, data):
                 return 2
             else:
                 return 0
-        else:
-            session.browser.find_element_by_xpath('//button[@aria-label="Активировать"]').click()
-            time.sleep(5)
-            return 1
     except Exception:
         return 0

@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from browser import Browser
 from utils import preload, relogin
+from selenium.webdriver.common.by import By
 
 
 def ad_excel(self, path, sheetname, id, date, timer, tariff1, tariff2):
@@ -168,7 +169,7 @@ def pay(window, session, data):
                     return 'Relogin Error'
             else:
                 return 'Error'
-        pay_elems1 = session.browser.find_elements_by_xpath('//div[@class="css-k1bey5"]/div')
+        pay_elems1 = session.browser.find_elements(By.XPATH, '//div[@class="css-k1bey5"]/div')
         if data[1]:
             if data[1].find('Легкий старт') != -1:
                 class_name = pay_elems1[0]
@@ -190,40 +191,37 @@ def pay(window, session, data):
             if class_name.get_attribute('class').find("css-1fgr50i") != -1:
                 class_name.click()
         if data[2]:
-            pay_elems2 = session.browser.find_elements_by_xpath('//div[@data-cy="vas-item"]')
+            pay_elems2 = session.browser.find_elements(By.XPATH, '//div[@data-cy="vas-item"]')
             if data[2].find('7 поднятий в верх списка') != -1:
                 pay_elems2[0].click()
             if data[2].find('VIP-объявление на 7 дней') != -1:
                 pay_elems2[1].click()
             if data[2].find('Топ-объявление на 7 дней') != -1:
                 pay_elems2[2].click()
-                session.browser.find_element_by_xpath('//div[@data-testid="dropdown-head"]').click()
+                session.browser.find_element(By.XPATH, '//div[@data-testid="dropdown-head"]').click()
             elif data[2].find('Топ-объявление на 30 дней') != -1:
                 pay_elems2[2].click()
-                session.browser.find_element_by_xpath('//div[@data-testid="dropdown-head"]').click()
+                session.browser.find_element(By.XPATH, '//div[@data-testid="dropdown-head"]').click()
                 time.sleep(1)
-                session.browser.find_elements_by_xpath('//li[@data-testid="dropdown-item"]')[1].click()
-        try:
-            session.browser.find_element_by_xpath('//section[@class="css-js4vyd"]')
-        except Exception:
-            active = 1
-        else:
+                session.browser.find_elements(By.XPATH, '//li[@data-testid="dropdown-item"]')[1].click()
+
+        if session.wait('//section[@class="css-js4vyd"]'):
             active = 4
+        else:
+            active = 1
 
-        if session.wait('//button[@data-cy="dismiss-cookies-overlay"]'):
-            session.browser.find_element_by_xpath('//button[@data-cy="dismiss-cookies-overlay"]').click()
-        session.browser.find_element_by_xpath('//button[@data-cy="purchase-pay-button"]').click()
-        session.wait('//div[@data-testid="provider-account"]')
-        try:
-            class_name = session.browser.find_element_by_xpath('//div[@data-testid="provider-account"]')
-            if class_name.get_attribute("class").find('disabled') != -1:
-                return 3
-            elif class_name.get_attribute("class").find('selected') == -1:
-                class_name.click()
-        except Exception as e:
-            return str(e)
+        cookies_overlay = session.wait('//button[@data-cy="dismiss-cookies-overlay"]')
+        if cookies_overlay:
+            session.browser.find_element(By.XPATH, '//button[@data-cy="dismiss-cookies-overlay"]').click()
+        session.browser.find_element(By.XPATH, '//button[@data-cy="purchase-pay-button"]').click()
 
-        session.browser.find_element_by_xpath('//button[@data-cy="purchase-pay-button"]').click()
+        pay_method = session.wait(By.XPATH, '//div[@data-testid="provider-account"]')
+        if pay_method.get_attribute("class").find('disabled') != -1:
+            return 3
+        elif pay_method.get_attribute("class").find('selected') == -1:
+            pay_method.click()
+
+        session.browser.find_element(By.XPATH, '//button[@data-cy="purchase-pay-button"]').click()
         if not session.wait('//div[@data-cy="purchase-confirmation-page[success]"]', timer=10):
             return 5
         return active
