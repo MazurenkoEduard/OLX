@@ -15,12 +15,13 @@ from operations.statistics import stats
 from operations.raises import raises
 from operations.activate import activation
 
+from config import BOT_TOKEN, CREATOR_ID
+
 warnings.filterwarnings("ignore")
 
 CURRENT_VERSION = ['0', '8', '3']
 
-TOKEN = "1627942449:AAGKtgQSz4lznPbPiS9VFmm3-zR6KUr_rNY"
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(BOT_TOKEN)
 
 
 class Thread(QThread):
@@ -104,7 +105,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.login_input.textChanged.connect(self.login_change)
         self.password_input.textChanged.connect(self.pass_change)
         # Telegram ID
-        self.CreatorID = '478373716'
+        self.CreatorID = CREATOR_ID
         self.UserID = None
         # Version
         self.version.setText('.'.join(CURRENT_VERSION))
@@ -245,15 +246,3 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
 
     def closeEvent(self, event):
         self.save_settings()
-
-
-def config_create():
-    if not os.path.exists('data'):
-        os.mkdir('data')
-    if not os.path.exists('data\\driver'):
-        os.mkdir('data\\driver')
-    if not os.path.exists('data\\sounds'):
-        os.mkdir('data\\sounds')
-    if not os.path.exists('data\\cookies.txt'):
-        file = open('data\\cookies.txt', 'w')
-        file.close()
