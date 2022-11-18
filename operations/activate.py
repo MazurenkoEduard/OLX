@@ -5,7 +5,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 from browser import Browser
 from utils import preload, relogin
-from selenium.webdriver.common.by import By
 
 
 def activate_excel(self, path, sheetname, id, date, timer):
@@ -46,85 +45,76 @@ def activate_excel(self, path, sheetname, id, date, timer):
     return {k: v for k, v in result.items() if v}
 
 
-def activation(self):
-    try:
-        self.window.start_button_4.setEnabled(False)
-        session = Browser(dir_path=self.window.driver_path)
+def get_dates(self):
+    path = self.window.path_input_4.text()
+    sheetname = self.window.sheet_input_4.text()
+    id = self.window.id_input_4.text()
+    date = self.window.date_input_4.text()
+    timer = self.window.time_input_4.text()
+    if '' in (path, sheetname, id, date, timer):
+        self.output_signal.emit('Заполните все поля', self.window.output_4)
+        self.window.start_button_4.setEnabled(True)
+        return None
+    return activate_excel(self, path, sheetname, id, date, timer)
 
-        path = self.window.path_input_4.text()
-        sheetname = self.window.sheet_input_4.text()
-        id = self.window.id_input_4.text()
-        date = self.window.date_input_4.text()
-        timer = self.window.time_input_4.text()
-        if '' in (path, sheetname, id, date, timer):
-            self.output_signal.emit('Заполните все поля', self.window.output_4)
-            self.window.start_button_4.setEnabled(True)
-            return
-        dates = activate_excel(self, path, sheetname, id, date, timer)
+
+def activation(self):
+    self.window.start_button_4.setEnabled(False)
+    session = Browser(dir_path=self.window.driver_path)
+    try:
+        dates = get_dates(self)
+        if not dates:
+            return None
 
         if not preload(self, self.window.output_4, session):
             self.output_signal.emit('Процесс остановлен', self.window.output_4)
             self.window.start_button_4.setEnabled(True)
-            return
+            return None
 
         self.output_signal.emit('Активация запущена', self.window.output_4)
         self.stop.setEnabled(True)
 
-        del_data = []
-        del_keys = []
-        replace_keys = []
         while dates:
-            for key in dates.keys():
+            for key in list(dates.keys()).copy():
                 if self.stop_flag:
                     raise Exception('Активация остановлена')
                 if time.strptime(key, "%Y.%m.%d %H:%M") <= time.localtime():
-                    for data in dates[key]:
+                    for data in dates[key].copy():
                         status = activate(self.window, session, data)
-                        if status == 0:
-                            del_data.append(data)
+                        if status == 100:
+                            dates[key].remove(data)
+                            self.output_signal.emit(data[0] + ' - Объявление активировано', self.window.output_4)
+                            self.window.report(data[0] + ' - Объявление активировано')
+                        elif status == 200:
+                            new_key = (datetime.strptime(key, "%Y.%m.%d %H:%M") + timedelta(minutes=2)).strftime("%Y.%m.%d %H:%M")
+                            if new_key in dates:
+                                for lst in dates.pop(key):
+                                    dates[new_key].append(lst)
+                            else:
+                                dates[new_key] = dates.pop(key)
+                            self.output_signal.emit(data[0] + ' - Активация перенесена на 2 минуты', self.window.output_4)
+                        elif status == 400:
+                            dates[key].remove(data)
                             self.output_signal.emit(data[0] + ' - Не найден', self.window.output_4)
                             self.window.audio('error')
                             self.window.report(data[0] + ' - Не найден')
-                        elif status == 1:
-                            del_data.append(data)
-                            self.output_signal.emit(data[0] + ' - Объявление активировано', self.window.output_4)
-                            self.window.report(data[0] + ' - Объявление активировано')
-                        elif status == 2:
-                            replace_keys.append(key)
-                            self.output_signal.emit(data[0] + ' - Активация перенесена на 2 минуты', self.window.output_4)
                         else:
-                            del_data.append(data)
+                            dates[key].remove(data)
                             self.output_signal.emit(data[0] + ' - Объявление не активировано, ошибка', self.window.output_4)
                             self.window.audio('error')
                             self.window.report(data[0] + ' - Объявление не активировано, ошибка')
                             self.window.report(status, 'Активация')
-                    for data in del_data:
-                        dates[key].remove(data)
                     if not dates[key]:
-                        del_keys.append(key)
-            for key in replace_keys:
-                new_key = (datetime.strptime(key, "%Y.%m.%d %H:%M") + timedelta(minutes=2)).strftime("%Y.%m.%d %H:%M")
-                if new_key in dates:
-                    for lst in dates.pop(key):
-                        dates[new_key].append(lst)
-                else:
-                    dates[new_key] = dates.pop(key)
-            for key in del_keys:
-                dates.pop(key)
-            del_data.clear()
-            del_keys.clear()
-            replace_keys.clear()
-        self.stop.setEnabled(False)
-        session.exit()
+                        dates.pop(key)
         self.output_signal.emit('Активация выполненна', self.window.output_4)
-        self.window.start_button_4.setEnabled(True)
     except Exception as e:
-        self.stop.setEnabled(False)
-        session.exit()
         if not self.stop_flag:
             self.window.report(str(e), 'Активация')
             self.output_signal.emit('Активация остановлена, ошибка', self.window.output_4)
             self.window.report('Активация остановлена, ошибка')
+    finally:
+        self.stop.setEnabled(False)
+        session.exit()
         self.window.start_button_4.setEnabled(True)
 
 
@@ -148,22 +138,23 @@ def activate(window, session, data):
         if activate_button:
             activate_button.click()
             time.sleep(5)
-            return 1
+            return 100
         else:
-            if not session.wait('//div[@class="userbox-dd__user-name"]'):
+            if not session.wait(path='//div[@data-testid="qa-user-dropdown"]',
+                                path2='//div[@class="userbox-dd__user-name"]'):
                 if relogin(window, session):
                     session.browser.get(link)
                     activate_button = session.wait('//button[@aria-label="Активировать"]')
                     if activate_button:
                         activate_button.click()
                         time.sleep(5)
-                        return 1
+                        return 100
                 else:
                     return 'Relogin Error'
             if data[1] < 5:
                 data[1] += 1
-                return 2
+                return 200
             else:
-                return 0
-    except Exception:
-        return 0
+                return 400
+    except Exception as e:
+        return str(e)

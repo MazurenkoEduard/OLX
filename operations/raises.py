@@ -14,23 +14,24 @@ def raise_excel(path, sheetname, id):
 
 
 def raises(self):
+    self.window.start_button_3.setEnabled(False)
+    session = Browser(dir_path=self.window.driver_path)
     try:
-        self.window.start_button_3.setEnabled(False)
-        session = Browser(dir_path=self.window.driver_path)
-
         path = self.window.path_input_3.text()
         sheetname = self.window.sheet_input_3.text()
         id = self.window.id_input_3.text()
         if '' in (path, sheetname, id):
             self.output_signal.emit('Заполните все поля', self.window.output_3)
             self.window.start_button_3.setEnabled(True)
-            return
+            return None
         ids = raise_excel(path, sheetname, id)
+        if not ids:
+            return None
 
         if not preload(self, self.window.output_3, session):
             self.output_signal.emit('Процесс остановлен', self.window.output_3)
             self.window.start_button_3.setEnabled(True)
-            return
+            return None
 
         self.output_signal.emit('Процесс начался, ожидайте', self.window.output_3)
         self.bar_signal.emit(0, self.window.up_bar)
@@ -137,9 +138,6 @@ def raises(self):
                 continue
             self.bar_signal.emit((i + 1) / len(ids) * self.window.up_bar.maximum(), self.window.up_bar)
 
-        self.stop.setEnabled(False)
-        session.exit()
-
         data = {'Id': ids,
                 'Тариф': tariff,
                 'Действует до': date,
@@ -152,15 +150,13 @@ def raises(self):
             data['Дата' + str(i + 1)] = dates[i]
             data['Время' + str(i + 1)] = times[i]
         write_excel(data, path, sheetname)
-
-        self.window.up_bar.hide()
         self.output_signal.emit('Данные получены', self.window.output_3)
-        self.window.start_button_3.setEnabled(True)
     except Exception as e:
-        self.stop.setEnabled(False)
-        session.exit()
-        self.window.up_bar.hide()
         if not self.stop_flag:
             self.window.report(str(e), 'Поднятия')
             self.output_signal.emit(str(e), self.window.output_3)
+    finally:
+        self.stop.setEnabled(False)
+        session.exit()
+        self.window.up_bar.hide()
         self.window.start_button_3.setEnabled(True)

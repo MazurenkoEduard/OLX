@@ -211,8 +211,8 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 settings.setValue('sound', '1')
             else:
                 settings.setValue('sound', '0')
-        except Exception:
-            pass
+        except Exception as e:
+            self.report(str(e), 'Settings')
 
     def load_settings(self):
         try:
@@ -233,16 +233,16 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.date_input_4.setText(settings.value('date4') if settings.value('date4') else "Date")
             self.time_input_1.setText(settings.value('time1') if settings.value('time1') else "Time")
             self.time_input_4.setText(settings.value('time4') if settings.value('time4') else "Time")
-            self.tariff_input_1.setText(settings.value('tariff1') if settings.value('tariff1') else "Tariff1")
-            self.addit_input_1.setText(settings.value('addit1') if settings.value('addit1') else "Tariff2")
+            self.tariff_input_1.setText(settings.value('tariff1') if settings.value('tariff1') else "Tariff")
+            self.addit_input_1.setText(settings.value('addit1') if settings.value('addit1') else "Addit")
             self.user_id_input.setText(settings.value('user_id'))
             self.login_input.setText(settings.value('login'))
             self.login_text = self.login_input.text()
             self.password_input.setText(settings.value('password'))
             self.pass_text = self.password_input.text()
             self.sound_button.setChecked(bool(int(settings.value('sound'))))
-        except Exception:
-            pass
+        except Exception as e:
+            self.report(str(e), 'Settings')
 
     def closeEvent(self, event):
         self.save_settings()

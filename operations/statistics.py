@@ -16,10 +16,9 @@ def stat_excel(path, sheetname, id):
 
 
 def stats(self):
+    self.window.start_button_2.setEnabled(False)
+    session = Browser(dir_path=self.window.driver_path)
     try:
-        self.window.start_button_2.setEnabled(False)
-        session = Browser(dir_path=self.window.driver_path)
-
         path = self.window.path_input_2.text()
         sheetname = self.window.sheet_input_2.text()
         id = self.window.id_input_2.text()
@@ -28,6 +27,8 @@ def stats(self):
             self.window.start_button_2.setEnabled(True)
             return
         ids = stat_excel(path, sheetname, id)
+        if not ids:
+            return None
 
         if not preload(self, self.window.output_2, session):
             self.output_signal.emit('Процесс остановлен', self.window.output_2)
@@ -80,7 +81,7 @@ def stats(self):
                 long += 1
                 continue
             elem = session.wait('//div[@data-cy="offer-stats-graph"]/div[2]')
-            svg = elem.find_element_by_tag_name('svg').get_attribute('innerHTML')
+            svg = elem.find_element(By.TAG_NAME, 'svg').get_attribute('innerHTML')
             soup = BeautifulSoup(svg, 'html.parser')
             gs = soup.find_all('g')
             all_g = gs[1].find_all('g')
@@ -103,9 +104,6 @@ def stats(self):
             self.bar_signal.emit((i + 1) / len(ids) * self.window.stat_bar.maximum(), self.window.stat_bar)
             long += 1
 
-        self.stop.setEnabled(False)
-        session.exit()
-
         while True:
             dk = list(data.keys())
             if set(data[dk[-1]]) == {''}:
@@ -118,15 +116,13 @@ def stats(self):
         date_column.reverse()
         data = dict(id_column + date_column)
         write_excel(data, path, sheetname)
-
-        self.window.stat_bar.hide()
         self.output_signal.emit('Данные получены', self.window.output_2)
-        self.window.start_button_2.setEnabled(True)
     except Exception as e:
-        self.stop.setEnabled(False)
-        session.exit()
-        self.window.stat_bar.hide()
         if not self.stop_flag:
             self.window.report(str(e), 'Статистика')
             self.output_signal.emit(str(e), self.window.output_2)
+    finally:
+        self.stop.setEnabled(False)
+        session.exit()
+        self.window.stat_bar.hide()
         self.window.start_button_2.setEnabled(True)
