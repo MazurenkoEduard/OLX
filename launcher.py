@@ -24,9 +24,8 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     window = Window()
     window.show()
-    code = app.exec_()
+    app.exec()
     Browser.clear()
-    sys.exit(code)
 
 
 if __name__ == '__main__':
