@@ -73,83 +73,15 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.path_button_3.clicked.connect(lambda: self.browse_folder(self.path_input_3))
         self.path_button_4.clicked.connect(lambda: self.browse_folder(self.path_input_4))
         # Login
-        self.login_thread = QThread()
-        self.login = Thread(window=self)
-        self.login.moveToThread(self.login_thread)
-        self.login.output_signal.connect(self.output_signal_accept)
-        self.login_button.clicked.connect(self.login_thread.start)
-        self.login_thread.started.connect(lambda: self.login_button.setEnabled(False))
-        self.login_thread.started.connect(self.login.login)
-        self.login.finished.connect(self.login_thread.quit)
-        self.login.finished.connect(self.login.deleteLater)
-        self.login_thread.finished.connect(self.login_thread.deleteLater)
-        self.login_thread.finished.connect(lambda: self.login_button.setEnabled(True))
+        self.create_thread(self.login_button)
         # Advertise
-        self.advertise_thread = QThread()
-        self.advertise = Thread(window=self)
-        self.advertise.moveToThread(self.advertise_thread)
-        self.advertise.output_signal.connect(self.output_signal_accept)
-        self.advertise_start.clicked.connect(self.advertise_thread.start)
-        self.advertise_thread.started.connect(lambda: self.advertise_start.setEnabled(False))
-        self.advertise_thread.started.connect(lambda: self.advertise_stop.setEnabled(True))
-        self.advertise_thread.started.connect(self.advertise.advertise)
-        self.advertise_stop.clicked.connect(lambda: self.advertise.finished.emit())
-        self.advertise_stop.clicked.connect(lambda: self.advertise_stop.setEnabled(False))
-        self.advertise.finished.connect(self.advertise_thread.quit)
-        self.advertise.finished.connect(self.advertise.deleteLater)
-        self.advertise_thread.finished.connect(self.advertise_thread.deleteLater)
-        self.advertise_thread.finished.connect(lambda: self.advertise_stop.setEnabled(False))
-        self.advertise_thread.finished.connect(lambda: self.advertise_start.setEnabled(True))
+        self.create_thread(self.advertise_start, self.advertise_stop)
         # Statistic
-        self.statistic_thread = QThread()
-        self.statistics = Thread(window=self)
-        self.statistics.moveToThread(self.statistic_thread)
-        self.statistics.bar_signal.connect(self.bar_signal_accept)
-        self.statistics.output_signal.connect(self.output_signal_accept)
-        self.statistic_start.clicked.connect(self.statistic_thread.start)
-        self.statistic_thread.started.connect(lambda: self.statistic_start.setEnabled(False))
-        self.statistic_thread.started.connect(lambda: self.statistic_stop.setEnabled(True))
-        self.statistic_thread.started.connect(self.statistics.statistics)
-        self.statistic_stop.clicked.connect(lambda: self.statistics.finished.emit())
-        self.statistic_stop.clicked.connect(lambda: self.statistic_stop.setEnabled(False))
-        self.statistics.finished.connect(self.statistic_thread.quit)
-        self.statistics.finished.connect(self.statistics.deleteLater)
-        self.statistic_thread.finished.connect(self.statistic_thread.deleteLater)
-        self.statistic_thread.finished.connect(lambda: self.statistic_stop.setEnabled(False))
-        self.statistic_thread.finished.connect(lambda: self.statistic_start.setEnabled(True))
+        self.create_thread(self.statistic_start, self.statistic_stop)
         # Raise
-        self.raise_thread = QThread()
-        self.raises = Thread(window=self)
-        self.raises.moveToThread(self.raise_thread)
-        self.raises.bar_signal.connect(self.bar_signal_accept)
-        self.raises.output_signal.connect(self.output_signal_accept)
-        self.raise_start.clicked.connect(self.raise_thread.start)
-        self.raise_thread.started.connect(lambda: self.raise_start.setEnabled(False))
-        self.raise_thread.started.connect(lambda: self.raise_stop.setEnabled(True))
-        self.raise_thread.started.connect(self.raises.raises)
-        self.raise_stop.clicked.connect(lambda: self.raises.finished.emit())
-        self.raise_stop.clicked.connect(lambda: self.raise_stop.setEnabled(False))
-        self.raises.finished.connect(self.raise_thread.quit)
-        self.raises.finished.connect(self.raises.deleteLater)
-        self.raise_thread.finished.connect(self.raise_thread.deleteLater)
-        self.raise_thread.finished.connect(lambda: self.raise_stop.setEnabled(False))
-        self.raise_thread.finished.connect(lambda: self.raise_start.setEnabled(True))
+        self.create_thread(self.raise_start, self.raise_stop)
         # Activate
-        self.activate_thread = QThread()
-        self.activate = Thread(window=self)
-        self.activate.moveToThread(self.activate_thread)
-        self.activate.output_signal.connect(self.output_signal_accept)
-        self.activate_start.clicked.connect(self.activate_thread.start)
-        self.activate_thread.started.connect(lambda: self.activate_start.setEnabled(False))
-        self.activate_thread.started.connect(lambda: self.activate_stop.setEnabled(True))
-        self.activate_thread.started.connect(self.activate.activate)
-        self.activate_stop.clicked.connect(lambda: self.activate.finished.emit())
-        self.activate_stop.clicked.connect(lambda: self.activate_stop.setEnabled(False))
-        self.activate.finished.connect(self.activate_thread.quit)
-        self.activate.finished.connect(self.activate.deleteLater)
-        self.activate_thread.finished.connect(self.activate_thread.deleteLater)
-        self.activate_thread.finished.connect(lambda: self.activate_stop.setEnabled(False))
-        self.activate_thread.finished.connect(lambda: self.activate_start.setEnabled(True))
+        self.create_thread(self.activate_start, self.activate_stop)
         # Settings
         self.settings_button.clicked.connect(self.settings)
         # User Id
@@ -159,13 +91,32 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.pass_text = ''
         self.login_input.textChanged.connect(self.login_change)
         self.password_input.textChanged.connect(self.pass_change)
-        # Telegram ID
-        self.CreatorID = CREATOR_ID
-        self.UserID = None
+        # Telegram
+        self.creator_id = CREATOR_ID
+        self.user_id = None
         # Version
         self.version.setText('.'.join(CURRENT_VERSION))
 
         self.load_settings()
+
+    def create_thread(self, start, stop=None):
+        thread = QThread()
+        operation = Thread(window=self)
+        operation.moveToThread(thread)
+        operation.output_signal.connect(self.output_signal_accept)
+        operation.bar_signal.connect(self.bar_signal_accept)
+        start.clicked.connect(thread.start)
+        thread.started.connect(lambda: start.setEnabled(False))
+        thread.started.connect(operation.advertise)
+        operation.finished.connect(thread.quit)
+        operation.finished.connect(operation.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(lambda: start.setEnabled(True))
+        if stop:
+            thread.started.connect(lambda: stop.setEnabled(True))
+            stop.clicked.connect(lambda: stop.setEnabled(False))
+            stop.clicked.connect(lambda: operation.finished.emit())
+            thread.finished.connect(lambda: stop.setEnabled(False))
 
     @staticmethod
     def bar_signal_accept(value, bar):
@@ -202,7 +153,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.dockWidget.show()
 
     def id_change(self):
-        self.UserID = self.user_id_input.text()
+        self.user_id = self.user_id_input.text()
 
     def login_change(self):
         self.login_text = self.login_input.text()
@@ -217,15 +168,15 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 if image:
                     with open(f'data/{image}', 'rb') as file:
                         img = file.read()
-                    bot.send_photo(self.CreatorID, img, caption=mess)
+                    bot.send_photo(self.creator_id, img, caption=mess)
                 else:
-                    bot.send_message(self.CreatorID, text=mess)
-            elif self.UserID:
+                    bot.send_message(self.creator_id, text=mess)
+            elif self.user_id:
                 mess = error
-                bot.send_message(self.UserID, mess)
+                bot.send_message(self.user_id, mess)
         except Exception as e:
             mess = 'Report function error' + '\n' + str(e)
-            bot.send_message(self.CreatorID, mess)
+            bot.send_message(self.creator_id, mess)
 
     def audio(self, path):
         try:
@@ -298,6 +249,6 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.sound_button.setChecked(bool(int(settings.value('sound'))))
         except Exception as e:
             self.report(str(e), 'Settings')
-
+            
     def closeEvent(self, event):
         self.save_settings()
