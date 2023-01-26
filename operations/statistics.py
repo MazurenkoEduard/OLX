@@ -102,7 +102,7 @@ class Statistic(Operation):
             self.write_excel(data, path, sheetname)
             self.thread.output_signal.emit('Данные получены', self.window.output_2)
         except Exception as e:
-            self.window.report(str(e), 'Статистика')
+            self.window.report(str(e), 'Statistics')
             self.thread.output_signal.emit(str(e), self.window.output_2)
         finally:
             self.session.exit()

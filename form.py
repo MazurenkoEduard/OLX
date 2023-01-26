@@ -13,7 +13,7 @@ from operations import Operation
 from operations.advertise import Advertise
 from operations.statistics import Statistic
 from operations.raises import Raise
-from operations.activate import Activate
+from operations.activation import Activation
 
 from config import BOT_TOKEN, CREATOR_ID
 
@@ -53,9 +53,9 @@ class Thread(QObject):
         process.raises()
         self.finished.emit()
 
-    def activate(self):
-        process = Activate(self, self.window, self.window.activate_output)
-        process.activate()
+    def activation(self):
+        process = Activation(self, self.window, self.window.activation_output)
+        process.activation()
         self.finished.emit()
 
 
@@ -73,15 +73,29 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.path_button_3.clicked.connect(lambda: self.browse_folder(self.path_input_3))
         self.path_button_4.clicked.connect(lambda: self.browse_folder(self.path_input_4))
         # Login
-        self.create_thread(self.login_button)
+        self.login_thread = QThread()
+        self.login_operation = Thread(window=self)
+        self.create_thread(self.login_thread, self.login_operation, self.login_operation.login, self.login_button)
         # Advertise
-        self.create_thread(self.advertise_start, self.advertise_stop)
+        self.advertise_thread = QThread()
+        self.advertise_operation = Thread(window=self)
+        self.create_thread(self.advertise_thread, self.advertise_operation, self.advertise_operation.login,
+                           self.advertise_start, self.advertise_stop)
         # Statistic
-        self.create_thread(self.statistic_start, self.statistic_stop)
+        self.statistic_thread = QThread()
+        self.statistic_operation = Thread(window=self)
+        self.create_thread(self.statistic_thread, self.statistic_operation, self.statistic_operation.login,
+                           self.statistic_start, self.statistic_stop)
         # Raise
-        self.create_thread(self.raise_start, self.raise_stop)
-        # Activate
-        self.create_thread(self.activate_start, self.activate_stop)
+        self.raise_thread = QThread()
+        self.raise_operation = Thread(window=self)
+        self.create_thread(self.raise_thread, self.raise_operation, self.raise_operation.login,
+                           self.raise_start, self.raise_stop)
+        # Activation
+        self.activation_thread = QThread()
+        self.activation_operation = Thread(window=self)
+        self.create_thread(self.activation_thread, self.activation_operation, self.activation_operation.activation,
+                           self.activation_start, self.activation_stop)
         # Settings
         self.settings_button.clicked.connect(self.settings)
         # User Id
@@ -99,24 +113,22 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
 
         self.load_settings()
 
-    def create_thread(self, start, stop=None):
-        thread = QThread()
-        operation = Thread(window=self)
+    def create_thread(self, thread, operation, func, start_button, stop_button=None):
         operation.moveToThread(thread)
         operation.output_signal.connect(self.output_signal_accept)
         operation.bar_signal.connect(self.bar_signal_accept)
-        start.clicked.connect(thread.start)
-        thread.started.connect(lambda: start.setEnabled(False))
-        thread.started.connect(operation.advertise)
+        start_button.clicked.connect(thread.start)
+        thread.started.connect(lambda: start_button.setEnabled(False))
+        thread.started.connect(func)
         operation.finished.connect(thread.quit)
         operation.finished.connect(operation.deleteLater)
         thread.finished.connect(thread.deleteLater)
-        thread.finished.connect(lambda: start.setEnabled(True))
-        if stop:
-            thread.started.connect(lambda: stop.setEnabled(True))
-            stop.clicked.connect(lambda: stop.setEnabled(False))
-            stop.clicked.connect(lambda: operation.finished.emit())
-            thread.finished.connect(lambda: stop.setEnabled(False))
+        thread.finished.connect(lambda: start_button.setEnabled(True))
+        if stop_button:
+            thread.started.connect(lambda: stop_button.setEnabled(True))
+            stop_button.clicked.connect(lambda: stop_button.setEnabled(False))
+            stop_button.clicked.connect(lambda: operation.finished.emit())
+            thread.finished.connect(lambda: stop_button.setEnabled(False))
 
     @staticmethod
     def bar_signal_accept(value, bar):
@@ -187,7 +199,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                         playsound('data\\sounds\\' + sound, False)
                         break
         except Exception as e:
-            self.report(str(e), 'Звук')
+            self.report(str(e), 'Sound')
 
     def save_settings(self):
         try:
@@ -218,7 +230,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             else:
                 settings.setValue('sound', '0')
         except Exception as e:
-            self.report(str(e), 'Settings')
+            self.report(str(e), 'Save settings')
 
     def load_settings(self):
         try:
@@ -248,7 +260,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.pass_text = self.password_input.text()
             self.sound_button.setChecked(bool(int(settings.value('sound'))))
         except Exception as e:
-            self.report(str(e), 'Settings')
+            self.report(str(e), 'Load settings')
             
     def closeEvent(self, event):
         self.save_settings()

@@ -20,6 +20,7 @@ class Raise(Operation):
                 self.thread.output_signal.emit('Заполните все поля', self.window.output_3)
                 self.window.start_button_3.setEnabled(True)
                 return None
+
             ids = self.raise_excel(path, sheetname, id)
             if not ids:
                 return None
@@ -132,7 +133,7 @@ class Raise(Operation):
             self.write_excel(data, path, sheetname)
             self.thread.output_signal.emit('Данные получены', self.window.output_3)
         except Exception as e:
-            self.window.report(str(e), 'Поднятия')
+            self.window.report(str(e), 'Raises')
             self.thread.output_signal.emit(str(e), self.window.output_3)
         finally:
             self.session.exit()

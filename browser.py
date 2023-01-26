@@ -6,8 +6,7 @@ import pickle
 import requests
 import zipfile
 import subprocess
-from selenium import webdriver as web
-from seleniumwire import webdriver as wire_web
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -47,26 +46,19 @@ class Browser:
         os.remove(self.dir_path + 'chromedriver.zip')
 
     def __load_browser(self, headless):
-        chrome_options = web.ChromeOptions()
+        chrome_options = webdriver.ChromeOptions()
         if headless:
             chrome_options.add_argument('headless')
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_argument("--start-maximized")             
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])            
+        chrome_options.add_argument("--start-maximized")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        # hide selenium
+        # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0")
+        # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # chrome_options.add_experimental_option("useAutomationExtension", False)
         if self.proxy:
-            wire_options = {
-                'proxy': {
-                    'http': 'http://' + self.proxy,
-                    'https': 'https://' + self.proxy,
-                    'no_proxy': 'localhost,127.0.0.1'
-                    }
-                }
-            self.browser = wire_web.Chrome(executable_path=self.dir_path + 'chromedriver',
-                                           seleniumwire_options=wire_options, options=chrome_options)
-        else:
-            self.browser = web.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)
-        # self.browser.maximize_window()
-        # self.browser.set_window_size(1920, 1080)
+            chrome_options.add_argument("--proxy-server=%s" % self.proxy)
+        self.browser = webdriver.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)
 
     def __driver(self, headless):
         try:

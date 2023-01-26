@@ -85,7 +85,7 @@ class Advertise(Operation):
                 for key in list(dates.keys()).copy():
                     if time.strptime(key, "%Y.%m.%d %H:%M") <= time.localtime():
                         for data in dates[key].copy():
-                            status = self.pay(data)
+                            status = self.payment(data)
                             if status == 100:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама оплачена', self.output)
@@ -127,19 +127,19 @@ class Advertise(Operation):
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, ошибка', self.output)
                                 self.window.audio('error')
-                                self.window.report(status, 'Оплата')
+                                self.window.report(status, 'Payment')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, ошибка')
                         if not dates[key]:
                             dates.pop(key)
             self.thread.output_signal.emit('Все объявления прорекламированы', self.output)
         except Exception as e:
-            self.window.report(str(e), 'Реклама')
+            self.window.report(str(e), 'Advertise')
             self.thread.output_signal.emit('Реклама остановлена, ошибка', self.output)
             self.window.report('Реклама остановлена, ошибка')
         finally:
             self.session.exit()
 
-    def pay(self, data):
+    def payment(self, data):
         try:
             link = "https://www.olx.ua/bundles/promote/?id=" + data[0] + "&bs=myaccount_promoting"
             self.session.browser.get(link)
@@ -149,11 +149,11 @@ class Advertise(Operation):
                     if self.relogin():
                         self.session.browser.get(link)
                         if not self.session.wait('//div[@class="css-k1bey5"]'):
-                            return 'Relogin Error'
+                            return 'Not found error'
                     else:
-                        return 'Relogin Error'
+                        return 'Relogin error'
                 else:
-                    return 'Error'
+                    return 'Login error'
             tariffs = self.session.browser.find_elements(By.XPATH, '//div[@class="css-k1bey5"]/div')
             if data[1]:
                 if data[1].find('Легкий старт') != -1:

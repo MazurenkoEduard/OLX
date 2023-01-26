@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from operations import Operation
 
 
-class Activate(Operation):
-    def activate_excel(self, path, sheetname, id, date, timer):
+class Activation(Operation):
+    def activation_excel(self, path, sheetname, id, date, timer):
         data = pd.read_excel(path, sheet_name=sheetname)
         ids = data[id].tolist()
         for i in range(len(ids)):
@@ -54,9 +54,9 @@ class Activate(Operation):
             self.thread.output_signal.emit('Заполните все поля', self.output)
             self.window.start_button_4.setEnabled(True)
             return None
-        return self.activate_excel(path, sheetname, id, date, timer)
+        return self.activation_excel(path, sheetname, id, date, timer)
 
-    def activate(self):
+    def activation(self):
         try:
             dates = self.get_dates()
             if not dates:
@@ -72,7 +72,7 @@ class Activate(Operation):
                 for key in list(dates.keys()).copy():
                     if time.strptime(key, "%Y.%m.%d %H:%M") <= time.localtime():
                         for data in dates[key].copy():
-                            status = self.activation(data)
+                            status = self.activate(data)
                             if status == 100:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(data[0] + ' - Объявление активировано', self.output)
@@ -95,18 +95,18 @@ class Activate(Operation):
                                 self.thread.output_signal.emit(data[0] + ' - Объявление не активировано, ошибка', self.output)
                                 self.window.audio('error')
                                 self.window.report(data[0] + ' - Объявление не активировано, ошибка')
-                                self.window.report(status, 'Активация')
+                                self.window.report(status, 'Activation')
                         if not dates[key]:
                             dates.pop(key)
             self.thread.output_signal.emit('Активация выполненна', self.output)
         except Exception as e:
-            self.window.report(str(e), 'Активация')
+            self.window.report(str(e), 'Activation')
             self.thread.output_signal.emit('Активация остановлена, ошибка', self.output)
             self.window.report('Активация остановлена, ошибка')
         finally:
             self.session.exit()
 
-    def activation(self, data):
+    def activate(self, data):
         try:
             link = 'https://www.olx.ua/d/myaccount/finished?query=' + data[0]
             self.session.browser.get(link)
