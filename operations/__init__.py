@@ -79,15 +79,16 @@ class Operation:
                 if cookies_bar:
                     cookies_bar.click()
         except BrowserException as e:
-            self.window.report(str(e), 'Браузер')
+            self.session.exit()
+            self.window.report(str(e), 'Browser')
             self.thread.output_signal.emit(str(e), self.output)
             status = False
         except Exception as e:
+            self.session.exit()
             self.window.report(str(e), 'Preload')
             self.thread.output_signal.emit(str(e), self.output)
             status = False
         finally:
-            self.session.exit()
             return status
 
     def hide_popup(self):
