@@ -5,11 +5,18 @@ import pandas as pd
 from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from operations import Operation
+import logging
+
+logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename="advertise.log", level=logging.DEBUG)
 
 
 class Advertise(Operation):
     def ad_excel(self, path, sheetname, id, date, timer, tariff, service):
+        logging.debug("Reading excel file")
         data = pd.read_excel(path, sheet_name=sheetname)
+        logging.info("Reading excel file DONE")
+
+        logging.debug("Data transformation")
         ids = data[id].tolist()
         for i in range(len(ids)):
             if pd.isnull(ids[i]):
@@ -36,6 +43,9 @@ class Advertise(Operation):
         for i in range(len(services)):
             if pd.isnull(services[i]):
                 services[i] = ''
+        logging.info("Data transformation DONE")
+
+        logging.debug("Data filtering")
         result = {dates[i] + ' ' + times[i]: [] for i in range(len(ids))}
         today = time.strftime("%Y.%m.%d", time.localtime())
         for i in range(len(ids)):
@@ -52,10 +62,12 @@ class Advertise(Operation):
                     result[dates[i] + ' ' + times[i]].append([ids[i], tariffs[i], services[i], 0])
                 else:
                     self.thread.output_signal.emit(ids[i] + ' - Реклама не оплачена, опоздание по времени', self.output)
+        logging.info("Data filtering DONE")
 
         return {k: v for k, v in result.items() if v}
 
     def get_dates(self):
+        logging.debug("Read input data")
         path = self.window.path_input_1.text()
         sheetname = self.window.sheet_input_1.text()
         id = self.window.id_input_1.text()
@@ -63,38 +75,53 @@ class Advertise(Operation):
         timer = self.window.time_input_1.text()
         tariff = self.window.tariff_input_1.text()
         service = self.window.service_input_1.text()
+        logging.info("Read input data DONE")
+
+        logging.debug("Data validation")
         if '' in (path, sheetname, id, date, timer, tariff, service):
             self.thread.output_signal.emit('Заполните все поля', self.output)
             self.window.start_button_1.setEnabled(True)
+            logging.warning("Data validation FAILED")
             return None
+        logging.info("Data validation DONE")
+
         return self.ad_excel(path, sheetname, id, date, timer, tariff, service)
 
     def advertise(self):
         try:
+            logging.debug("Get dates")
             dates = self.get_dates()
             if not dates:
+                logging.warning("Get dates FAILED")
                 return None
+            logging.warning("Get dates DONE")
 
+            logging.debug("Session preload")
             if not self.preload():
                 self.thread.output_signal.emit('Процесс остановлен', self.output)
+                logging.warning("Session preload FAILED")
                 return None
+            logging.info("Session preload DONE")
 
+            logging.debug("Advertising")
             self.thread.output_signal.emit('Реклама запущена', self.output)
-
             while dates:
                 for key in list(dates.keys()).copy():
                     if time.strptime(key, "%Y.%m.%d %H:%M") <= time.localtime():
                         for data in dates[key].copy():
+                            logging.debug("Advertising payment")
                             status = self.payment(data)
                             if status == 100:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама оплачена', self.output)
                                 self.window.report(f'{data[0]} - Реклама оплачена')
+                                logging.info("Advertising payment DONE")
                             elif status == 101:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Срок действия услуги превышает срок размещения объявления', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Срок действия услуги превышает срок размещения объявления')
+                                logging.warning("Posting period exceeded")
                             elif status == 200:
                                 new_key = (datetime.strptime(key, "%Y.%m.%d %H:%M") + timedelta(minutes=2)).strftime("%Y.%m.%d %H:%M")
                                 if new_key in dates:
@@ -103,35 +130,46 @@ class Advertise(Operation):
                                 else:
                                     dates[new_key] = dates.pop(key)
                                 self.thread.output_signal.emit(f'{data[0]} - Оплата рекламы перенесена на 2 минуты', self.output)
+                                logging.warning("Payment delay")
                             elif status == 400:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, опоздание по времени', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, опоздание по времени')
+                                logging.warning("Late payment")
                             elif status == 401:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, недостаточно средств', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, недостаточно средств')
+                                logging.warning("Insufficient funds")
                             elif status == 402:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, проблемы с соединением', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, проблемы с соединением')
+                                logging.warning("Problems with connection")
                             elif status == 403:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, не найден тариф', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, не найден тариф')
+                                logging.error("Tariff not found")
                             else:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, ошибка', self.output)
                                 self.window.audio('error')
                                 self.window.report(status, 'Payment')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, ошибка')
+                                logging.critical(status)
+                        logging.debug("Check empty dates")
+                        logging.debug(f"{key}: {dates[key]}")
                         if not dates[key]:
                             dates.pop(key)
+                            logging.info("Delete empty dates")
+                            logging.info(", ".join(dates.keys()))
             self.thread.output_signal.emit('Все объявления прорекламированы', self.output)
+            logging.info("Advertising DONE")
         except Exception as e:
             self.window.report(str(e), 'Advertise')
             self.thread.output_signal.emit('Реклама остановлена, ошибка', self.output)
