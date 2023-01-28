@@ -103,25 +103,25 @@ class Advertise(Operation):
                 return None
             logging.info("Session preload DONE")
 
-            logging.debug("Advertising")
+            logging.debug("Start advertising")
             self.thread.output_signal.emit('Реклама запущена', self.output)
             while dates:
                 for key in list(dates.keys()).copy():
                     if time.strptime(key, "%Y.%m.%d %H:%M") <= time.localtime():
                         for data in dates[key].copy():
-                            logging.debug("Advertising payment")
+                            logging.debug(f"{data[0]} - Advertising payment")
                             status = self.payment(data)
                             if status == 100:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама оплачена', self.output)
                                 self.window.report(f'{data[0]} - Реклама оплачена')
-                                logging.info("Advertising payment DONE")
+                                logging.info(f"{data[0]} - Advertising payment DONE")
                             elif status == 101:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Срок действия услуги превышает срок размещения объявления', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Срок действия услуги превышает срок размещения объявления')
-                                logging.warning("Posting period exceeded")
+                                logging.warning(f"{data[0]} - Posting period exceeded")
                             elif status == 200:
                                 new_key = (datetime.strptime(key, "%Y.%m.%d %H:%M") + timedelta(minutes=2)).strftime("%Y.%m.%d %H:%M")
                                 if new_key in dates:
@@ -130,38 +130,38 @@ class Advertise(Operation):
                                 else:
                                     dates[new_key] = dates.pop(key)
                                 self.thread.output_signal.emit(f'{data[0]} - Оплата рекламы перенесена на 2 минуты', self.output)
-                                logging.warning("Payment delay")
+                                logging.warning(f"{data[0]} - Payment delay")
                             elif status == 400:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, опоздание по времени', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, опоздание по времени')
-                                logging.warning("Late payment")
+                                logging.warning(f"{data[0]} - Late payment")
                             elif status == 401:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, недостаточно средств', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, недостаточно средств')
-                                logging.warning("Insufficient funds")
+                                logging.warning(f"{data[0]} - Insufficient funds")
                             elif status == 402:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, проблемы с соединением', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, проблемы с соединением')
-                                logging.warning("Problems with connection")
+                                logging.warning(f"{data[0]} - Problems with connection")
                             elif status == 403:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, не найден тариф', self.output)
                                 self.window.audio('error')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, не найден тариф')
-                                logging.error("Tariff not found")
+                                logging.error(f"{data[0]} - Tariff not found")
                             else:
                                 dates[key].remove(data)
                                 self.thread.output_signal.emit(f'{data[0]} - Реклама не оплачена, ошибка', self.output)
                                 self.window.audio('error')
                                 self.window.report(status, 'Payment')
                                 self.window.report(f'{data[0]} - Реклама не оплачена, ошибка')
-                                logging.critical(status)
+                                logging.critical(f"{data[0]} - {status}")
                         logging.debug("Check empty dates")
                         logging.debug(f"{key}: {dates[key]}")
                         if not dates[key]:
@@ -174,8 +174,10 @@ class Advertise(Operation):
             self.window.report(str(e), 'Advertise')
             self.thread.output_signal.emit('Реклама остановлена, ошибка', self.output)
             self.window.report('Реклама остановлена, ошибка')
+            logging.critical(str(e))
         finally:
             self.session.exit()
+            logging.debug("End advertising")
 
     def payment(self, data):
         try:
