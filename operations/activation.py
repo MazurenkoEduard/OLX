@@ -10,10 +10,10 @@ logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", filename="ac
 
 
 class Activation(Operation):
-    def activation_excel(self, path, sheetname, id, date, timer):
-        logging.debug("Reading excel file")
-        data = pd.read_excel(path, sheet_name=sheetname)
-        logging.info("Reading excel file DONE")
+    def activation_excel(self, path, sheet_name, id, date, timer):
+        logging.debug("Reading Excel file")
+        data = pd.read_excel(path, sheet_name=sheet_name)
+        logging.info("Reading Excel file DONE")
 
         logging.debug("Data transformation")
         ids = data[id].tolist()
@@ -58,21 +58,21 @@ class Activation(Operation):
     def get_dates(self):
         logging.debug("Read input data")
         path = self.window.path_input_4.text()
-        sheetname = self.window.sheet_input_4.text()
+        sheet_name = self.window.sheet_input_4.text()
         id = self.window.id_input_4.text()
         date = self.window.date_input_4.text()
         timer = self.window.time_input_4.text()
         logging.info("Read input data DONE")
 
         logging.debug("Data validation")
-        if '' in (path, sheetname, id, date, timer):
+        if '' in (path, sheet_name, id, date, timer):
             self.thread.output_signal.emit('Заполните все поля', self.output)
             self.window.start_button_4.setEnabled(True)
             logging.warning("Data validation FAILED")
             return None
         logging.info("Data validation DONE")
 
-        return self.activation_excel(path, sheetname, id, date, timer)
+        return self.activation_excel(path, sheet_name, id, date, timer)
 
     def activation(self):
         try:

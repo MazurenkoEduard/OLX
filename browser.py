@@ -52,10 +52,6 @@ class Browser:
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        # hide selenium
-        # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0")
-        # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        # chrome_options.add_experimental_option("useAutomationExtension", False)
         if self.proxy:
             chrome_options.add_argument("--proxy-server=%s" % self.proxy)
         self.browser = webdriver.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)

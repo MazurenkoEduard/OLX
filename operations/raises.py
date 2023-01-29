@@ -6,22 +6,22 @@ from operations import Operation
 
 
 class Raise(Operation):
-    def raise_excel(self, path, sheetname, id):
-        excel_data_df = pd.read_excel(path, sheet_name=sheetname, converters={id: str})
+    def raise_excel(self, path, sheet_name, id):
+        excel_data_df = pd.read_excel(path, sheet_name=sheet_name, converters={id: str})
         ids = excel_data_df[id].tolist()
         return ids
     
     def raises(self):
         try:
             path = self.window.path_input_3.text()
-            sheetname = self.window.sheet_input_3.text()
+            sheet_name = self.window.sheet_input_3.text()
             id = self.window.id_input_3.text()
-            if '' in (path, sheetname, id):
+            if '' in (path, sheet_name, id):
                 self.thread.output_signal.emit('Заполните все поля', self.window.output_3)
                 self.window.start_button_3.setEnabled(True)
                 return None
 
-            ids = self.raise_excel(path, sheetname, id)
+            ids = self.raise_excel(path, sheet_name, id)
             if not ids:
                 return None
 
