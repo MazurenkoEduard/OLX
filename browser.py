@@ -30,7 +30,6 @@ class Browser:
         self.proxy = proxy
         self.__browser_wait = False
         self.__driver(headless)
-        self.__class__.sessions.append(self)
 
     def __load_driver(self, version):
         url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_' + version
@@ -52,9 +51,14 @@ class Browser:
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        # hide selenium
+        # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0")
+        # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # chrome_options.add_experimental_option("useAutomationExtension", False)
         if self.proxy:
             chrome_options.add_argument("--proxy-server=%s" % self.proxy)
         self.browser = webdriver.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)
+        self.__class__.sessions.append(self)
 
     def __driver(self, headless):
         try:
@@ -127,8 +131,8 @@ class Browser:
             while self.__browser_wait:
                 time.sleep(1)
             self.browser.quit()
+            self.__class__.sessions.remove(self)
             self.browser = None
-        self.__class__.sessions.remove(self)
 
     @classmethod
     def clear(cls):
