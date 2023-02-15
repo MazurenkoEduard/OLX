@@ -73,8 +73,8 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.path_button_3.clicked.connect(lambda: self.browse_folder(self.path_input_3))
         self.path_button_4.clicked.connect(lambda: self.browse_folder(self.path_input_4))
         # Login
-        self.login_thread = QThread()
         self.login_operation = Thread(window=self)
+        self.login_thread = QThread()
         self.create_thread(self.login_thread, self.login_operation, self.login_operation.login, self.login_button)
         # Advertise
         self.advertise_thread = QThread()
@@ -121,8 +121,8 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         thread.started.connect(lambda: start_button.setEnabled(False))
         thread.started.connect(func)
         operation.finished.connect(thread.quit)
-        operation.finished.connect(operation.deleteLater)
-        thread.finished.connect(thread.deleteLater)
+        # operation.finished.connect(operation.deleteLater)
+        # thread.finished.connect(thread.deleteLater)
         thread.finished.connect(lambda: start_button.setEnabled(True))
         if stop_button:
             thread.started.connect(lambda: stop_button.setEnabled(True))
