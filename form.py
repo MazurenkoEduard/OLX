@@ -19,7 +19,7 @@ from config import BOT_TOKEN, CREATOR_ID
 
 warnings.filterwarnings("ignore")
 
-CURRENT_VERSION = ['0', '9', '0']
+CURRENT_VERSION = ['0', '9', '1']
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -65,7 +65,7 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         # Cookies
         self.cookies_location = 'data\\cookies.txt'
-        # Browsers
+        # Driver
         self.driver_path = 'data\\driver\\'
         # Browse Button
         self.path_button_1.clicked.connect(lambda: self.browse_folder(self.path_input_1))
@@ -73,23 +73,23 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.path_button_3.clicked.connect(lambda: self.browse_folder(self.path_input_3))
         self.path_button_4.clicked.connect(lambda: self.browse_folder(self.path_input_4))
         # Login
-        self.login_operation = Thread(window=self)
         self.login_thread = QThread()
+        self.login_operation = Thread(window=self)
         self.create_thread(self.login_thread, self.login_operation, self.login_operation.login, self.login_button)
         # Advertise
         self.advertise_thread = QThread()
         self.advertise_operation = Thread(window=self)
-        self.create_thread(self.advertise_thread, self.advertise_operation, self.advertise_operation.login,
+        self.create_thread(self.advertise_thread, self.advertise_operation, self.advertise_operation.advertise,
                            self.advertise_start, self.advertise_stop)
         # Statistic
         self.statistic_thread = QThread()
         self.statistic_operation = Thread(window=self)
-        self.create_thread(self.statistic_thread, self.statistic_operation, self.statistic_operation.login,
+        self.create_thread(self.statistic_thread, self.statistic_operation, self.statistic_operation.statistics,
                            self.statistic_start, self.statistic_stop)
         # Raise
         self.raise_thread = QThread()
         self.raise_operation = Thread(window=self)
-        self.create_thread(self.raise_thread, self.raise_operation, self.raise_operation.login,
+        self.create_thread(self.raise_thread, self.raise_operation, self.raise_operation.raises,
                            self.raise_start, self.raise_stop)
         # Activation
         self.activation_thread = QThread()
@@ -98,9 +98,9 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
                            self.activation_start, self.activation_stop)
         # Settings
         self.settings_button.clicked.connect(self.settings)
-        # User Id
+        # User ID input
         self.user_id_input.textChanged.connect(self.id_change)
-        # LogInfo
+        # Login Info
         self.login_text = ''
         self.pass_text = ''
         self.login_input.textChanged.connect(self.login_change)
@@ -141,15 +141,15 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def output_signal_accept(text, output):
         output.append(text)
 
-    def browse_folder(self, input):
+    def browse_folder(self, path):
         settings = QSettings('data\\input_data.ini', QSettings.IniFormat)
-        path = settings.value("dir_path")
-        if not path:
-            path = os.environ['USERPROFILE'] + '\\Desktop'
-        directory = QtWidgets.QFileDialog.getOpenFileName(self, 'Excel File', path, 'Excel file (*.xlsx *.xls)')[0]
+        dir_path = settings.value("dir_path")
+        if not dir_path:
+            dir_path = os.environ['USERPROFILE'] + '\\Desktop'
+        directory = QtWidgets.QFileDialog.getOpenFileName(self, 'Excel File', dir_path, 'Excel file (*.xlsx *.xls)')[0]
         if directory:
             settings.setValue('dir_path', directory)
-            input.setText(directory.replace('/', '\\'))
+            path.setText(directory.replace('/', '\\'))
 
     def check_log(self):
         with open(self.cookies_location, 'rb') as file:

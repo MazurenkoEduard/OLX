@@ -47,15 +47,15 @@ class Operation:
     def relogin(self):
         try:
             if self.window.login_text and self.window.pass_text:
-                self.session.browser.get(
-                    "https://www.olx.ua/account/?ref%5B0%5D%5Baction%5D=myaccount&ref%5B0%5D%5Bmethod%5D=index#login")
-                elem = self.session.wait('//section[@class="login-page has-animation"]')
+                self.session.browser.get("https://www.olx.ua/")
+                self.session.wait('//a[@class="userbox-login tdnone"]').click()
+                elem = self.session.wait('//form[@data-testid="login-form"]')
                 if elem:
-                    email = elem.find_element(By.XPATH, '//input[@id="userEmail"]')
+                    email = elem.find_element(By.XPATH, '//input[@name="username"]')
                     email.send_keys(self.window.login_text)
-                    password = elem.find_element(By.XPATH, '//input[@id="userPass"]')
+                    password = elem.find_element(By.XPATH, '//input[@name="password"]')
                     password.send_keys(self.window.pass_text)
-                    button = elem.find_element(By.XPATH, '//button[@id="se_userLogin"]')
+                    button = elem.find_element(By.XPATH, '//button[@data-testid="login-submit-button"]')
                     ActionChains(self.session.browser).click(button).perform()
                     if self.session.wait(path='//div[@data-testid="qa-user-dropdown"]',
                                          path2='//div[@class="userbox-dd__user-name"]'):

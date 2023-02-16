@@ -28,8 +28,9 @@ class Browser:
         self.browser = None
         self.dir_path = dir_path
         self.proxy = proxy
+        self.headless = headless
         self.__browser_wait = False
-        self.__driver(headless)
+        self.__load_browser()
 
     def __load_driver(self, version):
         url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_' + version
@@ -44,9 +45,9 @@ class Browser:
         zip_file.close()
         os.remove(self.dir_path + 'chromedriver.zip')
 
-    def __load_browser(self, headless):
+    def __config_browser(self):
         chrome_options = webdriver.ChromeOptions()
-        if headless:
+        if self.headless:
             chrome_options.add_argument('headless')
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--start-maximized")
@@ -60,10 +61,10 @@ class Browser:
         self.browser = webdriver.Chrome(executable_path=self.dir_path + 'chromedriver', chrome_options=chrome_options)
         self.__class__.sessions.append(self)
 
-    def __driver(self, headless):
+    def __load_browser(self):
         try:
             self.__browser_wait = True
-            self.__load_browser(headless)
+            self.__config_browser()
         except Exception:
             try:
                 sys_drive = os.getenv("SystemDrive")
@@ -77,7 +78,7 @@ class Browser:
                     if version.find('.') != -1:
                         version = '.'.join(version.split('.')[:-1])
                         self.__load_driver(version)
-                        self.__load_browser(headless)
+                        self.__config_browser()
                         break
                 else:
                     raise Exception('Установите Google Chrome')
@@ -88,8 +89,8 @@ class Browser:
             self.__browser_wait = False
 
     def load_cookies(self, cookies_location, url=None):
-        with open(cookies_location, 'rb') as cookiesfile:
-            cookies = pickle.load(cookiesfile)
+        with open(cookies_location, 'rb') as cookies_file:
+            cookies = pickle.load(cookies_file)
             self.browser.delete_all_cookies()
             self.browser.get("https://google.com" if url is None else url)
             for cookie in cookies:
@@ -135,6 +136,6 @@ class Browser:
             self.browser = None
 
     @classmethod
-    def clear(cls):
+    def clear_sessions(cls):
         while cls.sessions:
             cls.sessions[0].exit()

@@ -25,7 +25,7 @@ def main():
     window = Window()
     window.show()
     app.exec()
-    Browser.clear()
+    Browser.clear_sessions()
 
 
 if __name__ == '__main__':
