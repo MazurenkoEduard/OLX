@@ -107,8 +107,8 @@ class Operation:
             dismiss_button.click()
 
     @staticmethod
-    def write_excel(data, path, sheetname):
+    def write_excel(data, path, sheet_name):
         df = pd.DataFrame(data)
         split_path = path.split('.')
         new_path = '.'.join(split_path[:-1]) + '_new.' + split_path[-1]
-        df.to_excel(new_path, sheet_name=sheetname, index=False)
+        df.to_excel(new_path, sheet_name=sheet_name, index=False)
