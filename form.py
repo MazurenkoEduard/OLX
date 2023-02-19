@@ -190,12 +190,12 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
             mess = 'Report function error' + '\n' + str(e)
             bot.send_message(self.creator_id, mess)
 
-    def audio(self, path):
+    def play_sound(self, sound_name):
         try:
             if self.sound_button.isChecked():
                 sounds = os.listdir('data\\sounds')
                 for sound in sounds:
-                    if sound.find(path) != -1:
+                    if sound.find(sound_name) != -1:
                         playsound('data\\sounds\\' + sound, False)
                         break
         except Exception as e:

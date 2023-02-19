@@ -24,7 +24,7 @@ class BrowserException(Exception):
 class Browser:
     sessions = []
 
-    def __init__(self, dir_path=None, proxy=None, headless=True):
+    def __init__(self, dir_path='', proxy=None, headless=True):
         self.browser = None
         self.dir_path = dir_path
         self.proxy = proxy

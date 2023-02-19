@@ -62,10 +62,10 @@ class Advertise(Operation):
         df[self.naming['extension']] = 0
         return df
 
-    def advertise_report(self, df, row, status, audio=False, report=None):
+    def advertise_report(self, df, row, status, sound=False, report=None):
         df.drop(index=row[0], inplace=True)
-        if audio:
-            self.window.audio('error')
+        if sound:
+            self.window.play_sound('error')
         if report:
             self.window.report(status, report)
             self.window.report(f"{row[1][self.naming['id']]} - Реклама не оплачена, ошибка")
@@ -105,7 +105,7 @@ class Advertise(Operation):
                         self.advertise_report(df, row, 'Реклама оплачена')
                         logging.info(f"{row[1][self.naming['id']]} - Advertising payment DONE")
                     elif status == 101:
-                        self.advertise_report(df, row, 'Срок действия услуги превышает срок размещения объявления', audio=True)
+                        self.advertise_report(df, row, 'Срок действия услуги превышает срок размещения объявления', sound=True)
                         logging.warning(f"{row[1][self.naming['id']]} - Posting period exceeded")
                     elif status == 200:
                         timestamp = pd.Timestamp(row[1][self.naming['date']].year, row[1][self.naming['date']].month,
@@ -115,19 +115,19 @@ class Advertise(Operation):
                         self.thread.output_signal.emit(f"{row[1][self.naming['id']]} - Оплата рекламы перенесена на 2 минуты", self.output)
                         logging.warning(f"{row[1][self.naming['id']]} - Payment delay")
                     elif status == 400:
-                        self.advertise_report(df, row, 'Реклама не оплачена, опоздание по времени', audio=True)
+                        self.advertise_report(df, row, 'Реклама не оплачена, опоздание по времени', sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Late payment")
                     elif status == 401:
-                        self.advertise_report(df, row, 'Реклама не оплачена, недостаточно средств', audio=True)
+                        self.advertise_report(df, row, 'Реклама не оплачена, недостаточно средств', sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Insufficient funds")
                     elif status == 402:
-                        self.advertise_report(df, row, 'Реклама не оплачена, проблемы с соединением', audio=True)
+                        self.advertise_report(df, row, 'Реклама не оплачена, проблемы с соединением', sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Problems with connection")
                     elif status == 403:
-                        self.advertise_report(df, row, 'Реклама не оплачена, не найден тариф', audio=True)
+                        self.advertise_report(df, row, 'Реклама не оплачена, не найден тариф', sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Tariff not found")
                     else:
-                        self.advertise_report(df, row, status, audio=True, report='Payment')
+                        self.advertise_report(df, row, status, sound=True, report='Payment')
                         logging.critical(f"{row[1][self.naming['id']]} - {status}")
             self.thread.output_signal.emit('Все объявления прорекламированы', self.output)
             logging.info("Advertising DONE")

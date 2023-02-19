@@ -58,6 +58,7 @@ data/
 utils.py
 test.py
 update.py
+config.py
 
 # Translations
 *.mo
@@ -145,5 +146,5 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Config
-config.py
+# Excel files
+*.xlsx

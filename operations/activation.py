@@ -55,10 +55,10 @@ class Activation(Operation):
         df[self.naming['extension']] = 0
         return df
 
-    def activation_report(self, df, row, status, audio=False, report=None):
+    def activation_report(self, df, row, status, sound=False, report=None):
         df.drop(index=row[0], inplace=True)
-        if audio:
-            self.window.audio('error')
+        if sound:
+            self.window.play_sound('error')
         if report:
             self.window.report(status, report)
             self.window.report(f"{row[1][self.naming['id']]} - Объявление не активировано, ошибка")
@@ -105,10 +105,10 @@ class Activation(Operation):
                         self.thread.output_signal.emit(f"{row[1][self.naming['id']]} - Активация перенесена на 2 минуты", self.output)
                         logging.warning(f"{row[1][self.naming['id']]} - Activation delay")
                     elif status == 400:
-                        self.activation_report(df, row, 'Не найден', audio=True)
+                        self.activation_report(df, row, 'Не найден', sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Advertisement not found")
                     else:
-                        self.activation_report(df, row, status, audio=True, report='Activation')
+                        self.activation_report(df, row, status, sound=True, report='Activation')
                         logging.critical(f"{row[1][self.naming['id']]} - {status}")
             self.thread.output_signal.emit('Активация выполненна', self.output)
             logging.info("Activation DONE")
