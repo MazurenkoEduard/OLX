@@ -24,9 +24,9 @@ class Operation:
             if self.window.login_text and self.window.pass_text:
                 elem = self.session.wait('//form[@data-testid="login-form"]')
                 if elem:
-                    email = elem.find_element(By.XPATH, '//input[@name="username"]')
+                    email = elem.find_element(By.XPATH, '//input[@type="email"]')
                     email.send_keys(self.window.login_text)
-                    password = elem.find_element(By.XPATH, '//input[@name="password"]')
+                    password = elem.find_element(By.XPATH, '//input[@type="password"]')
                     password.send_keys(self.window.pass_text)
                     button = elem.find_element(By.XPATH, '//button[@data-testid="login-submit-button"]')
                     ActionChains(self.session.browser).click(button).perform()
@@ -51,9 +51,9 @@ class Operation:
                 self.session.wait('//a[@class="userbox-login tdnone"]').click()
                 elem = self.session.wait('//form[@data-testid="login-form"]')
                 if elem:
-                    email = elem.find_element(By.XPATH, '//input[@name="username"]')
+                    email = elem.find_element(By.XPATH, '//input[@type="email"]')
                     email.send_keys(self.window.login_text)
-                    password = elem.find_element(By.XPATH, '//input[@name="password"]')
+                    password = elem.find_element(By.XPATH, '//input[@type="password"]')
                     password.send_keys(self.window.pass_text)
                     button = elem.find_element(By.XPATH, '//button[@data-testid="login-submit-button"]')
                     ActionChains(self.session.browser).click(button).perform()

@@ -68,7 +68,7 @@ class Activation(Operation):
 
     def activation(self):
         try:
-            if self.read_data():
+            if not self.read_data():
                 return None
 
             logging.debug("Get Excel data")
@@ -88,7 +88,7 @@ class Activation(Operation):
             logging.debug("Start activation")
             self.thread.output_signal.emit('Активация запущена', self.output)
             while not data.empty:
-                today = pd.Timestamp.today().date()
+                today = pd.Timestamp.today().to_datetime64()
                 now = pd.Timestamp.now().time()
                 df = data[(data[self.naming['date']] <= today) & (data[self.naming['time']] <= now)]
                 for row in df.iterrows():

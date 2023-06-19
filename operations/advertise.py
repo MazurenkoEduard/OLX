@@ -95,7 +95,7 @@ class Advertise(Operation):
             logging.debug("Start advertising")
             self.thread.output_signal.emit('Реклама запущена', self.output)
             while not data.empty:
-                today = pd.Timestamp.today().date()
+                today = pd.Timestamp.today().to_datetime64()
                 now = pd.Timestamp.now().time()
                 df = data[(data[self.naming['date']] <= today) & (data[self.naming['time']] <= now)]
                 for row in df.iterrows():
