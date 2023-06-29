@@ -8,7 +8,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(750, 450)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("resources/olx.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)    #CHANGE
+        icon.addPixmap(QtGui.QPixmap("resources/olx.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)  # CHANGE
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -117,7 +117,7 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         self.advertise_stop.setFont(font)
         self.advertise_stop.setObjectName("advertise_stop")
-        self.advertise_stop.setEnabled(False)                    #CHANGE
+        self.advertise_stop.setEnabled(False)  # CHANGE
         self.menuLayout_1.addWidget(self.advertise_stop)
         self.path_name_1 = QtWidgets.QLabel(self.tab_1)
         self.path_name_1.setObjectName("path_name_1")
@@ -144,7 +144,7 @@ class Ui_MainWindow(object):
         self.menuLayout_2.addWidget(self.statistic_start)
         self.statistic_stop = QtWidgets.QPushButton(self.tab_2)
         self.statistic_stop.setObjectName("statistic_stop")
-        self.statistic_stop.setEnabled(False)                    #CHANGE
+        self.statistic_stop.setEnabled(False)  # CHANGE
         self.menuLayout_2.addWidget(self.statistic_stop)
         self.path_name_2 = QtWidgets.QLabel(self.tab_2)
         self.path_name_2.setObjectName("path_name_2")
@@ -183,7 +183,7 @@ class Ui_MainWindow(object):
         self.stat_bar.setAlignment(QtCore.Qt.AlignCenter)
         self.stat_bar.setObjectName("stat_bar")
         self.stat_bar.setRange(0, 100)
-        self.stat_bar.setVisible(False)                                                   #CHANGE
+        self.stat_bar.setVisible(False)  # CHANGE
         self.gridLayout_2.addWidget(self.stat_bar, 7, 0, 1, 6)
         self.tabWidget.addTab(self.tab_2, "")
         self.tab_3 = QtWidgets.QWidget()
@@ -215,7 +215,7 @@ class Ui_MainWindow(object):
         self.menuLayout_3.addWidget(self.raise_start)
         self.raise_stop = QtWidgets.QPushButton(self.tab_3)
         self.raise_stop.setObjectName("raise_stop")
-        self.raise_stop.setEnabled(False)                    #CHANGE
+        self.raise_stop.setEnabled(False)  # CHANGE
         self.menuLayout_3.addWidget(self.raise_stop)
         self.path_name_3 = QtWidgets.QLabel(self.tab_3)
         self.path_name_3.setObjectName("path_name_3")
@@ -239,7 +239,7 @@ class Ui_MainWindow(object):
         self.up_bar.setAlignment(QtCore.Qt.AlignCenter)
         self.up_bar.setObjectName("up_bar")
         self.up_bar.setRange(0, 100)
-        self.up_bar.setVisible(False)                                                    #CHANGE
+        self.up_bar.setVisible(False)  # CHANGE
         self.gridLayout_3.addWidget(self.up_bar, 2, 0, 1, 1)
         self.tabWidget.addTab(self.tab_3, "")
         self.tab_4 = QtWidgets.QWidget()
@@ -286,7 +286,7 @@ class Ui_MainWindow(object):
         self.menuLayout_4.addWidget(self.activation_start)
         self.activation_stop = QtWidgets.QPushButton(self.tab_4)
         self.activation_stop.setObjectName("activation_stop")
-        self.activation_stop.setEnabled(False)                    #CHANGE
+        self.activation_stop.setEnabled(False)  # CHANGE
         self.menuLayout_4.addWidget(self.activation_stop)
         self.path_name_4 = QtWidgets.QLabel(self.tab_4)
         self.path_name_4.setObjectName("path_name_4")
@@ -321,7 +321,7 @@ class Ui_MainWindow(object):
         self.settings_button.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.settings_button.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("resources/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)             #CHANGE
+        icon1.addPixmap(QtGui.QPixmap("resources/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)  # CHANGE
         self.settings_button.setIcon(icon1)
         self.settings_button.setIconSize(QtCore.QSize(16, 16))
         self.settings_button.setCheckable(False)
@@ -346,7 +346,7 @@ class Ui_MainWindow(object):
         font.setFamily("MS Shell Dlg 2")
         self.version.setFont(font)
         self.version.setText("")
-        self.version.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.version.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.version.setObjectName("version")
         self.gridLayout_settings.addWidget(self.version, 9, 0, 1, 1)
         self.user_id_input = QtWidgets.QLineEdit(self.dockWidgetContents)
@@ -354,10 +354,10 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         self.user_id_input.setFont(font)
         self.user_id_input.setObjectName("user_id_input")
-        reg = QtCore.QRegExp("[0-9]{18}")                       #CHANGE
-        pValidator = QtGui.QRegExpValidator(self)               #CHANGE
-        pValidator.setRegExp(reg)                               #CHANGE
-        self.user_id_input.setValidator(pValidator)             #CHANGE
+        reg = QtCore.QRegExp("[0-9]{18}")  # CHANGE
+        pValidator = QtGui.QRegExpValidator(self)  # CHANGE
+        pValidator.setRegExp(reg)  # CHANGE
+        self.user_id_input.setValidator(pValidator)  # CHANGE
         self.gridLayout_settings.addWidget(self.user_id_input, 1, 0, 1, 1)
         self.sound_button = QtWidgets.QCheckBox(self.dockWidgetContents)
         self.sound_button.setObjectName("sound_button")
@@ -383,11 +383,11 @@ class Ui_MainWindow(object):
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_settings.addItem(spacerItem, 7, 0, 1, 1)
         self.dockWidget.setWidget(self.dockWidgetContents)
-        self.dockWidget.setVisible(False)                               #CHANGE
+        self.dockWidget.setVisible(False)  # CHANGE
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)                               #CHANGE
+        self.tabWidget.setCurrentIndex(0)  # CHANGE
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tabWidget, self.sheet_input_1)
         MainWindow.setTabOrder(self.sheet_input_1, self.id_input_1)

@@ -2,22 +2,23 @@
 
 import pandas as pd
 from selenium.webdriver.common.by import By
-from operations import Operation
+
+from operations.base import BaseOperation
 
 
-class Raise(Operation):
+class Raise(BaseOperation):
     def raise_excel(self, path, sheet_name, id):
         excel_data_df = pd.read_excel(path, sheet_name=sheet_name, converters={id: str})
         ids = excel_data_df[id].tolist()
         return ids
-    
+
     def raises(self):
         try:
             path = self.window.path_input_3.text()
             sheet_name = self.window.sheet_input_3.text()
             id = self.window.id_input_3.text()
-            if '' in (path, sheet_name, id):
-                self.thread.output_signal.emit('Заполните все поля', self.window.output_3)
+            if "" in (path, sheet_name, id):
+                self.thread.output_signal.emit("Заполните все поля", self.window.output_3)
                 self.window.start_button_3.setEnabled(True)
                 return None
 
@@ -26,20 +27,20 @@ class Raise(Operation):
                 return None
 
             if not self.preload():
-                self.thread.output_signal.emit('Процесс остановлен', self.window.output_3)
+                self.thread.output_signal.emit("Процесс остановлен", self.window.output_3)
                 return None
-    
-            self.thread.output_signal.emit('Процесс начался, ожидайте', self.window.output_3)
+
+            self.thread.output_signal.emit("Процесс начался, ожидайте", self.window.output_3)
             self.thread.bar_signal.emit(0, self.window.up_bar)
             self.window.up_bar.show()
-    
+
             tariff = []
             date = []
             timer = []
             dates = []
             times = []
             long = 15
-    
+
             for i in range(long):
                 dates.append([])
                 times.append([])
@@ -51,89 +52,112 @@ class Raise(Operation):
                 if toggle_button:
                     toggle_button.click()
                 else:
-                    tariff.append('')
-                    date.append('')
-                    timer.append('')
+                    tariff.append("")
+                    date.append("")
+                    timer.append("")
                     for l in range(long):
-                        dates[l].append('')
-                        times[l].append('')
-                    self.thread.bar_signal.emit((i + 1) / len(ids) * self.window.up_bar.maximum(), self.window.up_bar)
-                    self.thread.output_signal.emit(ids[i] + ' - Объявление не рекламируется', self.window.output_3)
+                        dates[l].append("")
+                        times[l].append("")
+                    self.thread.bar_signal.emit(
+                        (i + 1) / len(ids) * self.window.up_bar.maximum(),
+                        self.window.up_bar,
+                    )
+                    self.thread.output_signal.emit(ids[i] + " - Объявление не рекламируется", self.window.output_3)
                     continue
                 if self.session.wait('//div[@data-testid="flyout-content"]'):
-                    divs = len(self.session.browser.find_elements(By.XPATH, '//div[@data-testid="flyout-content"]/div/div'))
+                    divs = len(
+                        self.session.browser.find_elements(By.XPATH, '//div[@data-testid="flyout-content"]/div/div')
+                    )
                     if divs > 1:
                         try:
                             index = 3
                             tariff_text = self.session.browser.find_element(
-                                By.XPATH, '//div[@data-testid="flyout-content"]/div/div[1]/p[1]').text
-                            tariff_time = self.session.browser.find_element(
-                                By.XPATH, '//div[@data-testid="flyout-content"]/div/div[1]/p[2]').text.split(': ')[1].split(', ')
+                                By.XPATH,
+                                '//div[@data-testid="flyout-content"]/div/div[1]/p[1]',
+                            ).text
+                            tariff_time = (
+                                self.session.browser.find_element(
+                                    By.XPATH,
+                                    '//div[@data-testid="flyout-content"]/div/div[1]/p[2]',
+                                )
+                                .text.split(": ")[1]
+                                .split(", ")
+                            )
                             tariff.append(tariff_text)
                             date.append(tariff_time[0])
                             timer.append(tariff_time[1])
                         except:
                             index = 0
-                            tariff.append('')
-                            date.append('')
-                            timer.append('')
+                            tariff.append("")
+                            date.append("")
+                            timer.append("")
                             for l in range(long):
-                                dates[l].append('')
-                                times[l].append('')
+                                dates[l].append("")
+                                times[l].append("")
                     else:
                         index = 1
-                        tariff.append('')
-                        date.append('')
-                        timer.append('')
+                        tariff.append("")
+                        date.append("")
+                        timer.append("")
                     if index == 0:
-                        self.thread.output_signal.emit(ids[i] + ' - Ошибка', self.window.output_3)
-                    elif self.session.browser.find_element(
-                            By.XPATH, f'//div[@data-testid="flyout-content"]/div/div[{index}]/p').text == 'Поднятие вверх списка':
+                        self.thread.output_signal.emit(ids[i] + " - Ошибка", self.window.output_3)
+                    elif (
+                        self.session.browser.find_element(
+                            By.XPATH,
+                            f'//div[@data-testid="flyout-content"]/div/div[{index}]/p',
+                        ).text
+                        == "Поднятие вверх списка"
+                    ):
                         table = self.session.browser.find_elements(
-                            By.XPATH, f'//div[@data-testid="flyout-content"]/div/div[{index}]/div/p')
+                            By.XPATH,
+                            f'//div[@data-testid="flyout-content"]/div/div[{index}]/div/p',
+                        )
                         dateX = []
                         timeX = []
                         for t in table:
-                            text = t.text.split(', ')
+                            text = t.text.split(", ")
                             dateX.append(text[0])
                             timeX.append(text[1])
                         for rng in range(len(dateX)):
                             dates[rng].append(dateX[rng])
                             times[rng].append(timeX[rng])
                         for l in range(len(dateX), long):
-                            dates[l].append('')
-                            times[l].append('')
+                            dates[l].append("")
+                            times[l].append("")
                     else:
                         for l in range(long):
-                            dates[l].append('')
-                            times[l].append('')
+                            dates[l].append("")
+                            times[l].append("")
                 else:
-                    tariff.append('')
-                    date.append('')
-                    timer.append('')
+                    tariff.append("")
+                    date.append("")
+                    timer.append("")
                     for l in range(long):
-                        dates[l].append('')
-                        times[l].append('')
-                    self.thread.bar_signal.emit((i + 1) / len(ids) * self.window.up_bar.maximum(), self.window.up_bar)
-                    self.thread.output_signal.emit(ids[i] + ' - Объявление не рекламируется', self.window.output_3)
+                        dates[l].append("")
+                        times[l].append("")
+                    self.thread.bar_signal.emit(
+                        (i + 1) / len(ids) * self.window.up_bar.maximum(),
+                        self.window.up_bar,
+                    )
+                    self.thread.output_signal.emit(ids[i] + " - Объявление не рекламируется", self.window.output_3)
                     continue
-                self.thread.bar_signal.emit((i + 1) / len(ids) * self.window.up_bar.maximum(), self.window.up_bar)
-    
-            data = {'Id': ids,
-                    'Тариф': tariff,
-                    'Действует до': date,
-                    'Время': timer}
+                self.thread.bar_signal.emit(
+                    (i + 1) / len(ids) * self.window.up_bar.maximum(),
+                    self.window.up_bar,
+                )
+
+            data = {"Id": ids, "Тариф": tariff, "Действует до": date, "Время": timer}
             for i in range(long):
                 while len(dates[i]) < len(ids):
-                    dates[i].append('')
-                    times[i].append('')
+                    dates[i].append("")
+                    times[i].append("")
             for i in range(long):
-                data['Дата' + str(i + 1)] = dates[i]
-                data['Время' + str(i + 1)] = times[i]
+                data["Дата" + str(i + 1)] = dates[i]
+                data["Время" + str(i + 1)] = times[i]
             self.write_excel(data, path, sheetname)
-            self.thread.output_signal.emit('Данные получены', self.window.output_3)
+            self.thread.output_signal.emit("Данные получены", self.window.output_3)
         except Exception as e:
-            self.window.report(str(e), 'Raises')
+            self.window.report(str(e), "Raises")
             self.thread.output_signal.emit(str(e), self.window.output_3)
         finally:
             self.session.exit()
