@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import json
-import time
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -18,15 +17,15 @@ class BaseOperation:
         self.window = window
         self.output = output
 
-    def login_input(self):
-        elem = self.session.wait('//form[@data-testid="login-form"]')
+    def login_input(self, session):
+        elem = session.wait('//form[@data-testid="login-form"]')
         if elem:
             email = elem.find_element(By.XPATH, '//input[@type="email"]')
             email.send_keys(self.window.login_text)
             password = elem.find_element(By.XPATH, '//input[@type="password"]')
             password.send_keys(self.window.pass_text)
             button = elem.find_element(By.XPATH, '//button[@data-testid="login-submit-button"]')
-            ActionChains(self.session.browser).click(button).perform()
+            ActionChains(session.browser).click(button).perform()
             return True
 
     def get_tokens(self, session):
@@ -54,7 +53,7 @@ class BaseOperation:
                 f"https://www.olx.ua/oauth/authorize/?client_id={self.window.client_id}&response_type=code&scope=read+write+v2"
             )
             if self.window.login_text and self.window.pass_text:
-                self.login_input()
+                self.login_input(session)
             if session.wait(
                 path='//div[@data-testid="qa-user-dropdown"]',
                 path2='//div[@class="userbox-dd__user-name"]',
@@ -103,7 +102,7 @@ class BaseOperation:
                 session.browser.get(
                     f"https://www.olx.ua/oauth/authorize/?client_id={self.window.client_id}&response_type=code&scope=read+write+v2"
                 )
-                if self.login_input():
+                if self.login_input(session):
                     if session.wait(
                         path='//div[@data-testid="qa-user-dropdown"]',
                         path2='//div[@class="userbox-dd__user-name"]',

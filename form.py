@@ -7,7 +7,7 @@ import telebot
 from playsound import playsound
 from PyQt5 import QtWidgets
 from PyQt5.Qt import QSettings
-from PyQt5.QtCore import QObject, QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal
 
 import design
 from config import BOT_TOKEN, CLIENT_ID, CLIENT_SECRET, CREATOR_ID
@@ -40,7 +40,7 @@ class Thread(QThread):
         self.func(self)
 
     def login(self):
-        process = BaseOperation(self, self.window, self.window.login_output, False)
+        process = BaseOperation(self, self.window, self.window.login_output)
         process.login()
         self.finished.emit()
 
