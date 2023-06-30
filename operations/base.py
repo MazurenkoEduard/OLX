@@ -48,7 +48,7 @@ class BaseOperation:
 
     def login(self):
         try:
-            session = Browser(dir_path=self.window.driver_path, headless=True)
+            session = Browser(dir_path=self.window.driver_path, headless=False)
             session.browser.get(
                 f"https://www.olx.ua/oauth/authorize/?client_id={self.window.client_id}&response_type=code&scope=read+write+v2"
             )
