@@ -58,7 +58,6 @@ data/
 utils.py
 test.py
 update.py
-config.py
 
 # Translations
 *.mo
