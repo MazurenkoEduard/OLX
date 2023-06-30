@@ -5,7 +5,6 @@ import time
 
 import pandas as pd
 import requests
-from selenium.webdriver.common.by import By
 
 from operations.base import BaseOperation
 
@@ -83,8 +82,8 @@ class Advertise(BaseOperation):
         df[self.naming["extension"]] = 0
         return df
 
-    def advertise_report(self, df, row, status, sound=False, report=None):
-        df.drop(index=row[0], inplace=True)
+    def advertise_report(self, data, row, status, sound=False, report=None):
+        data.drop(index=row[0], inplace=True)
         if sound:
             self.window.play_sound("error")
         if report:
@@ -108,31 +107,31 @@ class Advertise(BaseOperation):
 
             logging.debug("Start advertising")
             self.thread.output_signal.emit("Реклама запущена", self.output)
-            while not data.empty:
-                today = pd.Timestamp.today().to_datetime64()
+            while not data.empty and not self.thread.stop_flag:
+                today = pd.Timestamp.today().normalize().to_datetime64()
                 now = pd.Timestamp.now().time()
                 df = data[(data[self.naming["date"]] <= today) & (data[self.naming["time"]] <= now)]
                 for row in df.iterrows():
+                    if self.thread.stop_flag:
+                        break
                     logging.debug(f"{row[1][self.naming['id']]} - Advertising payment")
-                    status = self.payment(df, row)
+                    status = self.payment(data, row)
                     if status == 200:
-                        self.advertise_report(df, row, "Реклама оплачена")
+                        self.advertise_report(data, row, "Реклама оплачена")
                         logging.info(f"{row[1][self.naming['id']]} - Advertising payment DONE")
-                    # elif status == 202:
-                    #     self.advertise_report(
-                    #         df,
-                    #         row,
-                    #         "Срок действия услуги превышает срок размещения объявления",
-                    #         sound=True,
-                    #     )
-                    #     logging.warning(
-                    #         f"{row[1][self.naming['id']]} - Posting period exceeded"
-                    #     )
+                    elif status == 202:
+                        self.advertise_report(
+                            data,
+                            row,
+                            "Срок действия услуги превышает срок размещения объявления",
+                            sound=True,
+                        )
+                        logging.warning(f"{row[1][self.naming['id']]} - Posting period exceeded")
                     elif status == 402:
-                        self.advertise_report(df, row, "Реклама не оплачена, недостаточно средств", sound=True)
+                        self.advertise_report(data, row, "Реклама не оплачена, недостаточно средств", sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Insufficient funds")
                     elif status == 403:
-                        self.advertise_report(df, row, "Реклама не оплачена, не найден тариф", sound=True)
+                        self.advertise_report(data, row, "Реклама не оплачена, не найден тариф", sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Tariff not found")
                     elif status == 408:
                         timestamp = pd.Timestamp(
@@ -142,8 +141,8 @@ class Advertise(BaseOperation):
                             row[1][self.naming["time"]].hour,
                             row[1][self.naming["time"]].minute,
                         ) + pd.Timedelta(minutes=2)
-                        df.loc[row[0], [self.naming["date"], self.naming["time"]]] = [
-                            timestamp.date(),  # to_datetime64
+                        data.loc[row[0], [self.naming["date"], self.naming["time"]]] = [
+                            timestamp.normalize(),
                             timestamp.time(),
                         ]
                         self.thread.output_signal.emit(
@@ -152,11 +151,13 @@ class Advertise(BaseOperation):
                         )
                         logging.warning(f"{row[1][self.naming['id']]} - Payment delay")
                     elif status == 409:
-                        self.advertise_report(df, row, "Реклама уже оплачена", sound=True)
+                        self.advertise_report(data, row, "Реклама уже оплачена", sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Advertisement already paid")
                     else:
-                        self.advertise_report(df, row, status, sound=True, report="Payment")
+                        self.advertise_report(data, row, status, sound=True, report="Payment")
                         logging.critical(f"{row[1][self.naming['id']]} - {status}")
+                    time.sleep(10)
+                time.sleep(1)
             self.thread.output_signal.emit("Все объявления прорекламированы", self.output)
             logging.info("Advertising DONE")
         except Exception as e:
@@ -165,7 +166,6 @@ class Advertise(BaseOperation):
             self.window.report("Реклама остановлена, ошибка")
             logging.critical(str(e))
         finally:
-            self.session.exit()
             logging.debug("End advertising")
 
     def is_active(self, token, ad_id):
@@ -218,7 +218,7 @@ class Advertise(BaseOperation):
         else:
             return False
 
-    def payment(self, df, row, refresh=True):
+    def payment(self, data, row, refresh=True):
         try:
             with open("data/tokens.json", "r") as file:
                 tokens = json.loads(file.read())
@@ -280,29 +280,30 @@ class Advertise(BaseOperation):
                 },
             }
 
-            response = requests.post("https://www.olx.ua/api/v1/transaction/", headers=headers, json=payload).json()
+            response = requests.post("https://www.olx.ua/api/v1/transaction/", headers=headers, json=payload)
+            response_data = response.json()
 
-            # if response.get("errors"):
-            #     if response["errors"]["message"] == "401: Unauthorized" and refresh:
-            #         self.refresh()
-            #         return self.payment(df, row, False)
-            #     else:
-            #         return str(response)
+            if response.status_code == 401:
+                if refresh:
+                    self.refresh()
+                    return self.payment(data, row, False)
+                else:
+                    return str(response_data)
 
-            if response.get("action") == "success":
+            if response_data["action"] == "success":
                 if self.is_active(tokens["access_token"], row[1][self.naming["id"]]):
                     return 200
                 else:
                     return 202
-            # elif False:
-            #     return 402
+            elif response_data["action"] == "insufficient_funds":
+                return 402
             # elif False:
             #     if row[1][self.naming['extension']] < 5:
-            #         df.loc[row[0], self.naming['extension']] += 1
+            #         data.loc[row[0], self.naming['extension']] += 1
             #         return 408
             #     else:
             #         return 409
             else:
-                return str(response)
+                return str(response_data)
         except Exception as e:
             return str(e)

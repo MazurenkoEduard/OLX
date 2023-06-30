@@ -75,8 +75,8 @@ class Activation(BaseOperation):
         df[self.naming["extension"]] = 0
         return df
 
-    def activation_report(self, df, row, status, sound=False, report=None):
-        df.drop(index=row[0], inplace=True)
+    def activation_report(self, data, row, status, sound=False, report=None):
+        data.drop(index=row[0], inplace=True)
         if sound:
             self.window.play_sound("error")
         if report:
@@ -100,18 +100,20 @@ class Activation(BaseOperation):
 
             logging.debug("Start activation")
             self.thread.output_signal.emit("Активация запущена", self.output)
-            while not data.empty:
-                today = pd.Timestamp.today().to_datetime64()
+            while not data.empty and not self.thread.stop_flag:
+                today = pd.Timestamp.today().normalize().to_datetime64()
                 now = pd.Timestamp.now().time()
                 df = data[(data[self.naming["date"]] <= today) & (data[self.naming["time"]] <= now)]
                 for row in df.iterrows():
+                    if self.thread.stop_flag:
+                        break
                     logging.debug(f"{row[1][self.naming['id']]} - Advertisement activation")
-                    status = self.activate(df, row)
+                    status = self.activate(data, row)
                     if status == 200:
-                        self.activation_report(df, row, "Объявление активировано")
+                        self.activation_report(data, row, "Объявление активировано")
                         logging.info(f"{row[1][self.naming['id']]} - Advertisement activation DONE")
                     elif status == 404:
-                        self.activation_report(df, row, "Объявление не найдено", sound=True)
+                        self.activation_report(data, row, "Объявление не найдено", sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Advertisement not found")
                     elif status == 408:
                         timestamp = pd.Timestamp(
@@ -121,8 +123,8 @@ class Activation(BaseOperation):
                             row[1][self.naming["time"]].hour,
                             row[1][self.naming["time"]].minute,
                         ) + pd.Timedelta(minutes=2)
-                        df.loc[row[0], [self.naming["date"], self.naming["time"]]] = [
-                            timestamp.date(),  # to_datetime64
+                        data.loc[row[0], [self.naming["date"], self.naming["time"]]] = [
+                            timestamp.normalize(),
                             timestamp.time(),
                         ]
                         self.thread.output_signal.emit(
@@ -131,11 +133,13 @@ class Activation(BaseOperation):
                         )
                         logging.warning(f"{row[1][self.naming['id']]} - Activation delay")
                     elif status == 409:
-                        self.activation_report(df, row, "Объявление уже активировано", sound=True)
+                        self.activation_report(data, row, "Объявление уже активировано", sound=True)
                         logging.error(f"{row[1][self.naming['id']]} - Advertisement already activated")
                     else:
-                        self.activation_report(df, row, status, sound=True, report="Activation")
+                        self.activation_report(data, row, status, sound=True, report="Activation")
                         logging.critical(f"{row[1][self.naming['id']]} - {status}")
+                    time.sleep(10)
+                time.sleep(1)
             self.thread.output_signal.emit("Активация выполненна", self.output)
             logging.info("Activation DONE")
         except Exception as e:
@@ -144,10 +148,9 @@ class Activation(BaseOperation):
             self.window.report("Активация остановлена, ошибка")
             logging.critical(str(e))
         finally:
-            self.session.exit()
             logging.debug("End activation")
 
-    def activate(self, df, row, refresh=True):
+    def activate(self, data, row, refresh=True):
         try:
             with open("data/tokens.json", "r") as file:
                 tokens = json.loads(file.read())
@@ -176,7 +179,7 @@ class Activation(BaseOperation):
             payload = {
                 "query": "mutation UpdateAd($adId: Int, $action: B2CAction) {\n    b2c {\n        updateAd(adId: $adId, action: $action) {\n            adId\n            status\n            message\n        }\n    }\n}\n",
                 "variables": {
-                    "adId": row[1][self.naming["id"]],
+                    "adId": int(row[1][self.naming["id"]]),
                     "action": "ACTIVATE",
                 },
             }
@@ -190,7 +193,7 @@ class Activation(BaseOperation):
             if response.get("errors"):
                 if response["errors"]["message"] == "401: Unauthorized" and refresh:
                     self.refresh()
-                    return self.activate(df, row, False)
+                    return self.activate(data, row, False)
                 else:
                     return str(response)
 
@@ -200,7 +203,7 @@ class Activation(BaseOperation):
                 return 404
             elif response["data"]["b2c"]["updateAd"]["status"] == "ERROR_VALIDATION":
                 if row[1][self.naming["extension"]] < 5:
-                    df.loc[row[0], self.naming["extension"]] += 1
+                    data.loc[row[0], self.naming["extension"]] += 1
                     return 408
                 else:
                     return 409

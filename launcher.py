@@ -19,6 +19,9 @@ def make_dir():
     if not os.path.exists("data\\cookies.txt"):
         file = open("data\\cookies.txt", "w")
         file.close()
+    if not os.path.exists("data\\tokens.json"):
+        with open("data\\tokens.json", "w") as outfile:
+            outfile.write("{}")
 
 
 def main():
