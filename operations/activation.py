@@ -1,23 +1,17 @@
 # -*- coding: utf-8 -*-
 import json
-import logging
 import time
+from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 
 import pandas as pd
 import requests
 
 from operations.base import BaseOperation
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s:%(message)s",
-    filename="activation.log",
-    level=logging.DEBUG,
-)
-
 
 class Activation(BaseOperation):
     def read_data(self):
-        logging.debug("Read input data")
+        self.log("Read input data", DEBUG)
         self.naming = {
             "path": self.window.path_input_4.text(),
             "sheet_name": self.window.sheet_input_4.text(),
@@ -26,9 +20,9 @@ class Activation(BaseOperation):
             "time": self.window.time_input_4.text(),
             "extension": "Extension",
         }
-        logging.info("Read input data DONE")
+        self.log("Read input data DONE", INFO)
 
-        logging.debug("Data validation")
+        self.log("Data validation", DEBUG)
         if "" in (
             self.naming["path"],
             self.naming["sheet_name"],
@@ -37,23 +31,23 @@ class Activation(BaseOperation):
             self.naming["time"],
         ):
             self.thread.output_signal.emit("Заполните все поля", self.output)
-            logging.warning("Data validation FAILED")
+            self.log("Data validation FAILED", WARNING)
             return False
         else:
-            logging.info("Data validation DONE")
+            self.log("Data validation DONE", INFO)
             return True
 
     def activation_excel(self):
-        logging.debug("Reading Excel file")
+        self.log("Reading Excel file", DEBUG)
         df = pd.read_excel(
             self.naming["path"],
             sheet_name=self.naming["sheet_name"],
             keep_default_na=False,
             converters={self.naming["id"]: str},
         )
-        logging.info("Reading Excel file DONE")
+        self.log("Reading Excel file DONE", INFO)
 
-        logging.debug("Data filtering")
+        self.log("Data filtering", DEBUG)
         today = pd.Timestamp.today().date()
         now = pd.Timestamp.now().time()
         for row in df.iterrows():
@@ -63,14 +57,16 @@ class Activation(BaseOperation):
             elif not row[1][[self.naming["date"], self.naming["time"]]].all():
                 df.drop(index=row[0], inplace=True)
                 self.thread.output_signal.emit(row[1][self.naming["id"]] + " - Заполните все столбцы", self.output)
-            elif row[1][self.naming["date"]] < today or row[1][self.naming["time"]] < now:
+            elif row[1][self.naming["date"]] < today or (
+                row[1][self.naming["date"]] == today and row[1][self.naming["time"]] < now
+            ):
                 df.drop(index=row[0], inplace=True)
                 self.thread.output_signal.emit(
                     row[1][self.naming["id"]] + " - Реклама не активированна, опоздание по времени",
                     self.output,
                 )
         df.reset_index(drop=True, inplace=True)
-        logging.info("Data filtering DONE")
+        self.log("Data filtering DONE", INFO)
 
         df[self.naming["extension"]] = 0
         return df
@@ -91,14 +87,14 @@ class Activation(BaseOperation):
             if not self.read_data():
                 return None
 
-            logging.debug("Get Excel data")
+            self.log("Get Excel data", DEBUG)
             data = self.activation_excel()
             if data.empty:
-                logging.warning("Get Excel data FAILED")
+                self.log("Get Excel data FAILED", WARNING)
                 return None
-            logging.warning("Get Excel data DONE")
+            self.log("Get Excel data DONE", INFO)
 
-            logging.debug("Start activation")
+            self.log("Start activation", DEBUG)
             self.thread.output_signal.emit("Активация запущена", self.output)
             while not data.empty and not self.thread.stop_flag:
                 today = pd.Timestamp.today().normalize().to_datetime64()
@@ -107,14 +103,14 @@ class Activation(BaseOperation):
                 for row in df.iterrows():
                     if self.thread.stop_flag:
                         break
-                    logging.debug(f"{row[1][self.naming['id']]} - Advertisement activation")
+                    self.log(f"{row[1][self.naming['id']]} - Advertisement activation", DEBUG)
                     status = self.activate(data, row)
                     if status == 200:
                         self.activation_report(data, row, "Объявление активировано")
-                        logging.info(f"{row[1][self.naming['id']]} - Advertisement activation DONE")
+                        self.log(f"{row[1][self.naming['id']]} - Advertisement activation DONE", INFO)
                     elif status == 404:
                         self.activation_report(data, row, "Объявление не найдено", sound=True)
-                        logging.error(f"{row[1][self.naming['id']]} - Advertisement not found")
+                        self.log(f"{row[1][self.naming['id']]} - Advertisement not found", ERROR)
                     elif status == 408:
                         timestamp = pd.Timestamp(
                             row[1][self.naming["date"]].year,
@@ -131,24 +127,24 @@ class Activation(BaseOperation):
                             f"{row[1][self.naming['id']]} - Активация перенесена на 2 минуты",
                             self.output,
                         )
-                        logging.warning(f"{row[1][self.naming['id']]} - Activation delay")
+                        self.log(f"{row[1][self.naming['id']]} - Activation delay", WARNING)
                     elif status == 409:
                         self.activation_report(data, row, "Объявление уже активировано", sound=True)
-                        logging.error(f"{row[1][self.naming['id']]} - Advertisement already activated")
+                        self.log(f"{row[1][self.naming['id']]} - Advertisement already activated", ERROR)
                     else:
                         self.activation_report(data, row, status, sound=True, report="Activation")
-                        logging.critical(f"{row[1][self.naming['id']]} - {status}")
+                        self.log(f"{row[1][self.naming['id']]} - {status}", CRITICAL)
                     time.sleep(10)
                 time.sleep(1)
             self.thread.output_signal.emit("Активация выполненна", self.output)
-            logging.info("Activation DONE")
+            self.log("Activation DONE", INFO)
         except Exception as e:
             self.window.report(str(e), "Activation")
             self.thread.output_signal.emit("Активация остановлена, ошибка", self.output)
             self.window.report("Активация остановлена, ошибка")
-            logging.critical(str(e))
+            self.log(str(e), CRITICAL)
         finally:
-            logging.debug("End activation")
+            self.log("End activation", DEBUG)
 
     def activate(self, data, row, refresh=True):
         try:
@@ -189,6 +185,7 @@ class Activation(BaseOperation):
                 headers=headers,
                 json=payload,
             ).json()
+            self.log(f"Response: {response}", DEBUG)
 
             if response.get("errors"):
                 if response["errors"]["message"] == "401: Unauthorized" and refresh:

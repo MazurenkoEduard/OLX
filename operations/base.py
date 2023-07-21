@@ -9,13 +9,15 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
 from browser import Browser, BrowserException
+from logger import LogMixin
 
 
-class BaseOperation:
+class BaseOperation(LogMixin):
     def __init__(self, thread, window, output):
         self.thread = thread
         self.window = window
         self.output = output
+        self.naming = {}
 
     def login_input(self, session):
         elem = session.wait('//form[@data-testid="login-form"]')

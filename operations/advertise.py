@@ -1,23 +1,17 @@
 # -*- coding: utf-8 -*-
 import json
-import logging
 import time
+from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 
 import pandas as pd
 import requests
 
 from operations.base import BaseOperation
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s:%(message)s",
-    filename="advertise.log",
-    level=logging.DEBUG,
-)
-
 
 class Advertise(BaseOperation):
     def read_data(self):
-        logging.debug("Read input data")
+        self.log("Read input data", DEBUG)
         self.naming = {
             "path": self.window.path_input_1.text(),
             "sheet_name": self.window.sheet_input_1.text(),
@@ -28,9 +22,9 @@ class Advertise(BaseOperation):
             "service": self.window.service_input_1.text(),
             "extension": "Extension",
         }
-        logging.info("Read input data DONE")
+        self.log("Read input data DONE", INFO)
 
-        logging.debug("Data validation")
+        self.log("Data validation", DEBUG)
         if "" in (
             self.naming["path"],
             self.naming["sheet_name"],
@@ -41,23 +35,23 @@ class Advertise(BaseOperation):
             self.naming["service"],
         ):
             self.thread.output_signal.emit("Заполните все поля", self.output)
-            logging.warning("Data validation FAILED")
+            self.log("Data validation FAILED", WARNING)
             return False
         else:
-            logging.info("Data validation DONE")
+            self.log("Data validation DONE", INFO)
             return True
 
     def advertise_excel(self):
-        logging.debug("Reading Excel file")
+        self.log("Reading Excel file", DEBUG)
         df = pd.read_excel(
             self.naming["path"],
             sheet_name=self.naming["sheet_name"],
             keep_default_na=False,
             converters={self.naming["id"]: str},
         )
-        logging.info("Reading Excel file DONE")
+        self.log("Reading Excel file DONE", INFO)
 
-        logging.debug("Data filtering")
+        self.log("Data filtering", DEBUG)
         today = pd.Timestamp.today().date()
         now = pd.Timestamp.now().time()
         for row in df.iterrows():
@@ -70,14 +64,16 @@ class Advertise(BaseOperation):
             elif not row[1][[self.naming["tariff"], self.naming["service"]]].any():
                 df.drop(index=row[0], inplace=True)
                 self.thread.output_signal.emit(row[1][self.naming["id"]] + " - Не выбран тариф", self.output)
-            elif row[1][self.naming["date"]] < today or row[1][self.naming["time"]] < now:
+            elif row[1][self.naming["date"]] < today or (
+                row[1][self.naming["date"]] == today and row[1][self.naming["time"]] < now
+            ):
                 df.drop(index=row[0], inplace=True)
                 self.thread.output_signal.emit(
                     row[1][self.naming["id"]] + " - Реклама не оплачена, опоздание по времени",
                     self.output,
                 )
         df.reset_index(drop=True, inplace=True)
-        logging.info("Data filtering DONE")
+        self.log("Data filtering DONE", INFO)
 
         df[self.naming["extension"]] = 0
         return df
@@ -98,14 +94,14 @@ class Advertise(BaseOperation):
             if not self.read_data():
                 return None
 
-            logging.debug("Get Excel data")
+            self.log("Get Excel data", DEBUG)
             data = self.advertise_excel()
             if data.empty:
-                logging.warning("Get Excel data FAILED")
+                self.log("Get Excel data FAILED", WARNING)
                 return None
-            logging.warning("Get Excel data DONE")
+            self.log("Get Excel data DONE", WARNING)
 
-            logging.debug("Start advertising")
+            self.log("Start advertising", DEBUG)
             self.thread.output_signal.emit("Реклама запущена", self.output)
             while not data.empty and not self.thread.stop_flag:
                 today = pd.Timestamp.today().normalize().to_datetime64()
@@ -114,11 +110,11 @@ class Advertise(BaseOperation):
                 for row in df.iterrows():
                     if self.thread.stop_flag:
                         break
-                    logging.debug(f"{row[1][self.naming['id']]} - Advertising payment")
+                    self.log(f"{row[1][self.naming['id']]} - Advertising payment", DEBUG)
                     status = self.payment(data, row)
                     if status == 200:
                         self.advertise_report(data, row, "Реклама оплачена")
-                        logging.info(f"{row[1][self.naming['id']]} - Advertising payment DONE")
+                        self.log(f"{row[1][self.naming['id']]} - Advertising payment DONE", INFO)
                     elif status == 202:
                         self.advertise_report(
                             data,
@@ -126,13 +122,13 @@ class Advertise(BaseOperation):
                             "Срок действия услуги превышает срок размещения объявления",
                             sound=True,
                         )
-                        logging.warning(f"{row[1][self.naming['id']]} - Posting period exceeded")
+                        self.log(f"{row[1][self.naming['id']]} - Posting period exceeded", WARNING)
                     elif status == 402:
                         self.advertise_report(data, row, "Реклама не оплачена, недостаточно средств", sound=True)
-                        logging.error(f"{row[1][self.naming['id']]} - Insufficient funds")
+                        self.log(f"{row[1][self.naming['id']]} - Insufficient funds", ERROR)
                     elif status == 403:
                         self.advertise_report(data, row, "Реклама не оплачена, не найден тариф", sound=True)
-                        logging.error(f"{row[1][self.naming['id']]} - Tariff not found")
+                        self.log(f"{row[1][self.naming['id']]} - Tariff not found", ERROR)
                     elif status == 408:
                         timestamp = pd.Timestamp(
                             row[1][self.naming["date"]].year,
@@ -149,24 +145,24 @@ class Advertise(BaseOperation):
                             f"{row[1][self.naming['id']]} - Оплата рекламы перенесена на 2 минуты",
                             self.output,
                         )
-                        logging.warning(f"{row[1][self.naming['id']]} - Payment delay")
+                        self.log(f"{row[1][self.naming['id']]} - Payment delay", WARNING)
                     elif status == 409:
                         self.advertise_report(data, row, "Реклама уже оплачена", sound=True)
-                        logging.error(f"{row[1][self.naming['id']]} - Advertisement already paid")
+                        self.log(f"{row[1][self.naming['id']]} - Advertisement already paid", ERROR)
                     else:
                         self.advertise_report(data, row, status, sound=True, report="Payment")
-                        logging.critical(f"{row[1][self.naming['id']]} - {status}")
+                        self.log(f"{row[1][self.naming['id']]} - {status}", CRITICAL)
                     time.sleep(10)
                 time.sleep(1)
             self.thread.output_signal.emit("Все объявления прорекламированы", self.output)
-            logging.info("Advertising DONE")
+            self.log("Advertising DONE", INFO)
         except Exception as e:
             self.window.report(str(e), "Advertise")
             self.thread.output_signal.emit("Реклама остановлена, ошибка", self.output)
             self.window.report("Реклама остановлена, ошибка")
-            logging.critical(str(e))
+            self.log(str(e), CRITICAL)
         finally:
-            logging.debug("End advertising")
+            self.log("End advertising", DEBUG)
 
     def is_active(self, token, ad_id):
         headers = {
@@ -213,6 +209,8 @@ class Advertise(BaseOperation):
             headers=headers,
             json=payload,
         ).json()
+        self.log(f"Response: {response}", DEBUG)
+
         if response["data"]["b2c"]["ads"]["items"]:
             return True
         else:
