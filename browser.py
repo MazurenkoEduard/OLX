@@ -46,7 +46,7 @@ class Browser:
         # chrome_options.add_experimental_option("useAutomationExtension", False)
         if self.proxy:
             chrome_options.add_argument("--proxy-server=%s" % self.proxy)
-        self.browser = Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
+        self.browser = Chrome(ChromeDriverManager(version="latest").install(), chrome_options=chrome_options)
         self.__class__.sessions.append(self)
 
     def __load_browser(self):

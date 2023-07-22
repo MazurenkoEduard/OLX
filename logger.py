@@ -12,4 +12,4 @@ logging.basicConfig(
 class LogMixin:
     @classmethod
     def log(cls,  message: str, level=logging.DEBUG):
-        logging.log(level, f"{cls.__name__}: {message}")
+        logging.log(level, f"{cls.__name__}: {str(message)}")

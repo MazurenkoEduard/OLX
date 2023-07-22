@@ -188,17 +188,17 @@ class Activation(BaseOperation):
             self.log(f"Response: {response}", DEBUG)
 
             if response.get("errors"):
-                if response["errors"]["message"] == "401: Unauthorized" and refresh:
+                if response["errors"][0]["message"] == "401: Unauthorized" and refresh:
                     self.refresh()
                     return self.activate(data, row, False)
                 else:
                     return str(response)
 
-            if response["data"]["b2c"]["updateAd"]["status"] == "SUCCESS":
+            if response["data"]["b2c"]["updateAd"].get("status") == "SUCCESS":
                 return 200
-            elif response["data"]["b2c"]["updateAd"]["status"] == "FAILED":
+            elif response["data"]["b2c"]["updateAd"].get("status") == "FAILED":
                 return 404
-            elif response["data"]["b2c"]["updateAd"]["status"] == "ERROR_VALIDATION":
+            elif response["data"]["b2c"]["updateAd"].get("status") == "ERROR_VALIDATION":
                 if row[1][self.naming["extension"]] < 5:
                     data.loc[row[0], self.naming["extension"]] += 1
                     return 408
