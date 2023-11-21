@@ -10,7 +10,6 @@ from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
 try:
     from subprocess import DEVNULL
@@ -46,7 +45,7 @@ class Browser:
         # chrome_options.add_experimental_option("useAutomationExtension", False)
         if self.proxy:
             chrome_options.add_argument("--proxy-server=%s" % self.proxy)
-        self.browser = Chrome(ChromeDriverManager(version="latest").install(), chrome_options=chrome_options)
+        self.browser = Chrome(options=chrome_options)
         self.__class__.sessions.append(self)
 
     def __load_browser(self):
