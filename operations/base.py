@@ -32,7 +32,7 @@ class BaseOperation(LogMixin):
 
     def get_tokens(self, session):
         url = urlparse(session.browser.current_url)
-        code = parse_qs(url.query)["code"][0]
+        code = parse_qs(url.query)["code"][0].replace("/", "")
         payload = {
             "grant_type": "authorization_code",
             "client_id": self.window.client_id,
