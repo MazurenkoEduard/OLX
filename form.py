@@ -130,10 +130,10 @@ class Window(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.login_input.textChanged.connect(self.login_change)
         self.password_input.textChanged.connect(self.pass_change)
         # OLX Client Info
-        self.client_id = CLIENT_ID
+        self.client_id = int(CLIENT_ID) if CLIENT_ID else CLIENT_ID
         self.client_secret = CLIENT_SECRET
         # Telegram
-        self.creator_id = CREATOR_ID
+        self.creator_id = int(CREATOR_ID) if CREATOR_ID else CREATOR_ID
         self.user_id = None
         # Version
         self.version.setText(".".join(CURRENT_VERSION))
